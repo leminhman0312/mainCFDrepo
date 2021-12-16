@@ -1,0 +1,226 @@
+#!MC 800
+$!VarSet |LFDSFN1| = '"n0012.plt"'
+$!VarSet |LFDSVL1| = '"X" "Y" "P" "U" "V"'
+$!SETSTYLEBASE FACTORY
+$!PAPER 
+  BACKGROUNDCOLOR = WHITE
+  ISTRANSPARENT = YES
+  ORIENTPORTRAIT = NO
+  SHOWGRID = YES
+  SHOWRULER = YES
+  SHOWPAPER = YES
+  PAPERSIZE = LETTER
+  PAPERSIZEINFO
+    {
+    LETTER
+      {
+      WIDTH = 8.5
+      HEIGHT = 11
+      LEFTHARDCLIPOFFSET = 0.125
+      RIGHTHARDCLIPOFFSET = 0.125
+      TOPHARDCLIPOFFSET = 0.125
+      BOTTOMHARDCLIPOFFSET = 0.125
+      }
+    }
+  RULERSPACING = ONEINCH
+  PAPERGRIDSPACING = HALFINCH
+  REGIONINWORKAREA
+    {
+    X1 = -0.05
+    Y1 = -0.05
+    X2 = 11.05
+    Y2 = 8.55
+    }
+$!COLORSPECTRUM 
+  CONTOURCOLORMAP = SMRAINBOW
+  SURFACERGBMIN
+    {
+    R = 0
+    G = 0
+    B = 0
+    }
+  SURFACERGBMAX
+    {
+    R = 255
+    G = 255
+    B = 255
+    }
+$!COLORMAPCONTROL RESETTOFACTORY
+### Frame Number 1 ###
+$!READDATASET  '|LFDSFN1|' 
+  INCLUDETEXT = NO
+  INCLUDEGEOM = NO
+  VARLOADMODE = BYNAME
+  VARNAMELIST = '|LFDSVL1|' 
+$!REMOVEVAR |LFDSVL1|
+$!FRAMELAYOUT 
+  SHOWHEADER = NO
+  HEADERCOLOR = RED
+  XYPOS
+    {
+    X = 0.12346
+    Y = 0.1298
+    }
+  WIDTH = 10.753
+  HEIGHT = 8.2404
+$!FRAMEMODE  = TWOD
+$!FRAMENAME  = 'Frame 001' 
+$!ACTIVEFIELDZONES  =  [1-2]
+$!GLOBALCONTOUR 
+  VAR = 3
+  LEGEND
+    {
+    SHOW = YES
+    XYPOS
+      {
+      X = 81.936
+      Y = 64.617
+      }
+    BOX
+      {
+      BOXTYPE = FILLED
+      }
+    NUMFORMAT
+      {
+      FORMATTING = INTEGER
+      }
+    }
+$!CONTOURLEVELS NEW
+  RAWDATA
+15
+-44.7193751335
+-38.202750206
+-31.6861252785
+-25.169500351
+-18.6528754234
+-12.1362504959
+-5.61962556839
+0.896999359131
+7.41362428665
+13.9302492142
+20.4468741417
+26.9634990692
+33.4801239967
+39.9967489243
+46.5133738518
+$!GLOBALTWODVECTOR 
+  UVAR = 4
+  VVAR = 5
+  RELATIVELENGTH = 0.002
+  RELATIVELENGTHINGRIDUNITS = NO
+  HEADSIZEINFRAMEUNITS = 1
+  SIZEHEADBYFRACTION = NO
+$!FIELD  [1]
+  MESH
+    {
+    COLOR = RED
+    }
+  CONTOUR
+    {
+    CONTOURTYPE = BOTHLINESANDFLOOD
+    COLOR = BLACK
+    }
+  VECTOR
+    {
+    SHOW = NO
+    COLOR = RED
+    }
+  SCATTER
+    {
+    COLOR = RED
+    }
+  SHADE
+    {
+    COLOR = RED
+    }
+$!FIELD  [2]
+  MESH
+    {
+    SHOW = NO
+    COLOR = GREEN
+    }
+  CONTOUR
+    {
+    SHOW = NO
+    COLOR = GREEN
+    }
+  VECTOR
+    {
+    COLOR = BLACK
+    IJKSKIP
+      {
+      I = 9
+      }
+    }
+  SCATTER
+    {
+    COLOR = GREEN
+    }
+  SHADE
+    {
+    COLOR = GREEN
+    }
+  BOUNDARY
+    {
+    COLOR = GREEN
+    }
+$!TWODAXIS 
+  XVAR = 1
+  YVAR = 2
+$!VIEW FIT
+$!TWODAXIS 
+  GRIDAREA
+    {
+    EXTENTS
+      {
+      X1 = 5
+      Y1 = 5
+      Y2 = 77.205
+      }
+    }
+  DEPXTOYRATIO = 1
+  XDETAIL
+    {
+    AUTOGRID = NO
+    AXISPOSITION = 5
+    RANGEMIN = -1
+    RANGEMAX = 2.00000630926
+    GRSPACING = 1
+    TICKLABEL
+      {
+      NUMFORMAT
+        {
+        FORMATTING = INTEGER
+        }
+      }
+    TITLE
+      {
+      TITLEMODE = NONE
+      OFFSET = 1
+      }
+    }
+  YDETAIL
+    {
+    AUTOGRID = NO
+    AXISPOSITION = 5
+    RANGEMIN = -1
+    RANGEMAX = 1
+    GRSPACING = 1
+    TICKLABEL
+      {
+      NUMFORMAT
+        {
+        FORMATTING = INTEGER
+        }
+      }
+    TITLE
+      {
+      TITLEMODE = NONE
+      OFFSET = 1
+      }
+    }
+$!FIELDLAYERS 
+  SHOWCONTOUR = YES
+  SHOWBOUNDARY = NO
+$!REMOVEVAR |LFDSFN1|
+$!SETSTYLEBASE CONFIG

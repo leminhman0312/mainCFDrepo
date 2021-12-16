@@ -1,0 +1,23 @@
+TP2
+!PLOT
+TICKS
+EQUAL
+ARROW
+0 0
+CENTER
+ABOVE
+COMPUTED VELOCITY VECTORS
+X [meters]
+-115.95 35.62
+Y [meters]
+!user:p=2;
+-30.57 30.52
+cart2.v2d
+!user:p=14;
+newfile
+curv.v2d
+!END
+X [meters]
+0 30
+Y [meters]
+-30 0

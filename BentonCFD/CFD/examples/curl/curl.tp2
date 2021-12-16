@@ -1,0 +1,16 @@
+TP2
+!PLOT
+TICKS
+EQUAL
+CENTER
+ABOVE
+COMPUTATIONAL CELLS
+X [meters]
+-8.25 2.18
+Y [meters]
+-1.68 1.68
+cart.p2d
+2 1 1
+1 2 2 1 2
+
+!END

@@ -1,0 +1,197 @@
+% Created 2021-12-12 Sun 16:24
+% Intended LaTeX compiler: pdflatex
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{minted}
+\usepackage[a4paper,margin=1in, truedimen]{geometry} \usepackage{graphicx}
+\author{Max Le}
+\date{\today}
+\title{Notes on Finite Volume Method MME 9710 - Advanced CFD}
+\hypersetup{
+ pdfauthor={Max Le},
+ pdftitle={Notes on Finite Volume Method MME 9710 - Advanced CFD},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 27.2 (Org mode 9.4.4)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+
+\section{Generic Conservation Equation}
+\label{sec:orgd44b5ea}
+Consider the following generic conservation equation:
+\begin{equation}
+\frac{\partial \phi}{\partial t} + \nabla \cdot (\textbf{u}\phi) + \nabla \cdot \textbf{J}_\phi = S_\phi
+\end{equation}
+where the variables are defined as:
+
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Variable} & \textbf{Description}\\
+\hline
+\(\phi\) & Generic variable\\
+\(t\) & Time\\
+\textbf{u} & Velocity vector\\
+\(\textbf{J}_\phi\) & Diffusive flux of \(\phi\)\\
+\(S_\phi\) & Volumetric source/sink of \(\phi\)\\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Mass Conservation Equation}
+\label{sec:orgcb0edd7}
+Setting \(\phi = \rho\), where \(\rho\) is the density. Also, mass conservation of a \texttt{continuous} substance does not
+have diffusive flux => \(\textbf{J}_\rho = 0\).
+\begin{equation}
+\frac{\partial \rho}{\partial t} + \nabla \cdot (\textbf{u}\rho) = S_\rho
+\end{equation}
+
+\textbf{Notes}:
+\begin{itemize}
+\item For incompressible, constant density flow:
+\begin{itemize}
+\item \(\frac{\partial \rho}{\partial t} = 0\)
+\item \(\nabla \cdot (\textbf{u}\rho) = \rho \nabla \cdot \textbf{u}\)
+\item Result in: \(\nabla \cdot \textbf{u} = \frac{S_\rho}{\rho}\)
+\item And if no source/sink => \(\nabla \cdot \textbf{u} = 0\)
+\end{itemize}
+\end{itemize}
+
+\section{Momentum Conservation Equation}
+\label{sec:org8093e8a}
+Setting \(\phi = \rho \textbf{u}\). Diffusive flux term \(\textbf{J}_\textbf{u} = -\nabla \cdot \sigma\), where
+\(\sigma\) is the fluid stress tensor. 
+
+\begin{equation}
+\frac{\partial (\rho \textbf{u})}{\partial t} + \nabla \cdot (\rho \textbf{uu})  = \nabla \cdot \sigma +
+S_\textbf{u}
+\end{equation}
+The stress tensor, \(\sigma\) can be expressed in terms of pressure (\(p\)) and viscous stress tensor (\(\tau\))
+and identity matrix, \(I\):
+
+\begin{equation}
+\sigma = -p\textbf{I} + \tau
+\end{equation}
+After substituting, we get the following form of the momentum conservation equation:
+\begin{equation}
+\frac{\partial (\rho \textbf{u})}{\partial t} + \nabla \cdot (\rho \textbf{uu})  = -\nabla p + \nabla \cdot \tau
++ S_\textbf{u}
+\end{equation}
+For incompressible Newtonian fluid, we can rewrite \(\tau\) in terms of the dynamic viscosity, \(\mu\)
+\(\tau = \mu(\nabla \textbf{u}+\nabla \textbf{u}^T)\).  Thus, a momentum conservation equation for \uline{incompressible},
+\uline{Newtonian} fluid, \uline{constant velocity}:
+
+\begin{equation}
+\frac{\partial (\rho \textbf{u})}{\partial t} + \nabla \cdot (\rho \textbf{uu})  = -\nabla p + \mu \nabla^2
+\textbf{u} + S_\textbf{u}
+\end{equation}
+
+\section{Energy Conservation Equation}
+\label{sec:org873ce7f}
+Setting \(\phi = \rho h\) with \(h\) being the specific enthalpy of a substance at a given state. Thus, the unit for \(\phi\) is
+energy per unit volume. The diffusive flux is given by Fourier's law: \(J = -k \nabla \textbf{T}\) with \(k\) is the thermal conductivity.
+\begin{equation}
+\frac{\partial (\rho h)}{\partial t} + \nabla \cdot (\rho \textbf{u} h)  = \nabla \cdot (k \nabla \textbf{T}) +
+S_h
+\end{equation}
+
+If we assume:
+\begin{itemize}
+\item incompressible flow
+\item constant specific heat capacity, \(h = c_p \textbf{T}\)
+\item constant thermophysical properties (\(k\) and \(\rho\))
+\item no source term
+\end{itemize}
+
+\begin{equation}
+\frac{\partial (\textbf{T})}{\partial t} + \nabla \cdot (\textbf{u T})  = \alpha \nabla ^2 \textbf{T}
+\end{equation}
+
+where \(\alpha = \frac{k}{\rho c_p}\) is the thermal diffusivity. 
+
+\section{Discretization of the Generic Conservation Equation}
+\label{sec:org2150e07}
+Our generic variable, \(\phi\) is a function of of spatial and time: \(\phi = \phi (\textbf{x},t)\), where
+\(\textbf{x} = (x,y,z)\). Note that spatial variable can be influenced "\textsubscript{one} way\_" or "\textsubscript{two} way\_", i.e.
+\begin{itemize}
+\item One way: changes in \(\phi\) only occur due to change on one side of that location
+\item Two way: changes in \(\phi\) occur due to changes on both side of that location.
+\end{itemize}
+For example, heat conduction in the image below at cell \(i\) is influenced by cell \(i-1\) and
+\(i+1\). Here, \(\textbf{x}\) is a \uline{two way} coordinate for heat conduction
+
+\begin{center}
+\includegraphics[scale=0.2]{pic/heatTwoway.png}
+\end{center}
+Now consider transient heat convection/conduction. The temperature at any given time is influenced by
+existing conditions before that point \textbf{in time}. Here, \(\textbf{t}\) is a \uline{one way} coordinate for transient heat conduction/convection
+
+\begin{center}
+\includegraphics[scale=0.2]{pic/heatOneway.png}
+\end{center}
+Recall our generic conservation equation:
+\begin{equation*}
+\frac{\partial \phi}{\partial t} + \nabla \cdot (\textbf{u}\phi) + \nabla \cdot \textbf{J}_\phi = S_\phi
+\end{equation*}
+We consider the diffusion term or \textbf{elliptic PDE} :  \(\boxed{\nabla \cdot \textbf{J}_\phi}\) to be \uline{two-way in space}\\
+Likewise, the convection term or \textbf{parabolic PDE} :  \(\boxed{\nabla \cdot (\textbf{u}\phi)}\) to be \uline{one-way in space} 
+
+\section{Main idea behind Discretization}
+\label{sec:orgf8cd562}
+Our goal is to:
+\begin{itemize}
+\item replace the PDEs' continuous solution with \uline{discrete} solution, at \uline{specific location} that approximates the continuous
+solution suitably.
+\end{itemize}
+For finite volume:
+\begin{itemize}
+\item domain is split into \uline{non overlapping finite} regions that fill the domain
+\item the discrete point is at the \uline{centroid} of each control volume with volume \(V_p\), at position \(\textbf{x}_p\)
+\item surround these cells, we have the "faces". At the center of these "faces", we have the integration point at position
+\(\textbf{x}_{ip}\)
+\item the governing equations are then integrated over a control volume, where surface flux terms and volume source terms are
+balanced. 
+\begin{center}
+\includegraphics[scale=0.2]{pic/finiteVolumeElement.png}
+\end{center}
+\end{itemize}
+\section{Determine Cell Centre + Face Integration Points}
+\label{sec:org1e6a7d0}
+Cell centre => location of solution variables.\\
+Points on face => fluxes are evaluated.\\
+Consider a volume integral of a quantity \(\phi\), we may express this integral in discrete form as follow:
+\begin{equation}
+\int_V \phi dV \approx \phi_P V_P 
+\end{equation}
+where \(\phi_P\) is the value of \(\phi\) at some internal within \(V\) and \(V_P\) is total volume of the cell:
+\begin{equation}
+V_P = \int_V dV 
+\end{equation}
+To prove the above result, we expand \(\phi\) in a Taylor series about the point \(P\).
+\begin{equation}
+\phi \approx \phi_P + \nabla \phi_P (\textbf{x} - \textbf{x}_P) + \nabla^2 \phi_P (\textbf{x}-\textbf{x}_P)(\textbf{x}-\textbf{x}_P) + .... O(\delta^3) 
+\end{equation}
+with \(\delta\) being the characteristic grid spacing. Substitute this into our assumed expression for \(V_P\):
+\begin{equation}
+\int_V \phi dV \approx \int_V [\phi_P + \nabla \phi_P (\textbf{x} - \textbf{x}_P) + \nabla^2 \phi_P (\textbf{x}-\textbf{x}_P)(\textbf{x}-\textbf{x}_P) + .... O(\delta^3)]dV 
+\end{equation}
+We note that \(\phi_P\) and its derivatives are constants:
+\begin{equation}
+\int_V \phi dV \approx \phi_P dV + \nabla \phi_P \int_V (\textbf{x}-\textbf{x}_P) dV + \nabla^2 \phi_P \int_V (\textbf{x}-\textbf{x}_P)(\textbf{x}-\textbf{x}_P)dV + .... O(\delta^3) 
+\end{equation}
+Because our \(\textbf{x}_P\) point is at centroid, so \uline{\(\int_V (\textbf{x}-\textbf{x}_P) dV = 0\)} 
+\end{document}
