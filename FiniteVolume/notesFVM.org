@@ -1,6 +1,6 @@
 #+TITLE: Notes on Finite Volume Method MME 9710
 #+AUTHOR: Max Le
-#+LATEX_HEADER: \usepackage[a4paper,margin=0.75in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb} 
+#+LATEX_HEADER: \usepackage[a4paper,margin=1in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb} 
 #+LATEX_HEADER: \usepackage{amsfonts} \usepackage{amsmath}
 #+DATE: \today
 #+OPTIONS: tex:t 
@@ -429,4 +429,119 @@
   \textbf{T} = \textbf{T}_i + \delta \textbf{T}i
   \end{equation}
   #+end_export
-  
+** Source Terms
+   Our source term can have many forms, depending on the type of heat source. We will assume /external convection/
+   and /radiation exchange/:
+   * For external convection:
+     #+begin_export latex
+     \begin{equation}
+     \frac{S_{conv,P}}{V_P} = -hA_0(T_P-T_{\infty,c})
+     \end{equation}
+     #+end_export
+     where:
+     - $h$ is the convective coefficient.
+     - $A_0$ is external surface area of the cell $P$.
+     - $T_P$ is temperature at the centroid of cell $P$.
+     - $T_{\infty,c}$ is the ambient temperature for the convection process. 
+   * For radiation exchange:
+     #+begin_export latex
+     \begin{equation}
+     \frac{S_{rad}}{V_P} = -\epsilon \sigma A_0(T_P^4 - T_{\infty,r}^4)
+     \end{equation}
+     #+end_export
+     where:
+     - $\epsilon$ is the surface emissivity.
+     - $\sigma$ is the Stefan-Boltzmann constant.
+     - $T_{\infty,r}$ is the surrounding temperature for radiation exchange. 
+** Discussion of Discretization Procedure
+*** Temperature Profile Assumptions
+    When computing the diffusive fluxes through the faces, we assumed a *piecewise-linear profile* for the temperature.
+    This ensures that the derivatives are defined at the integration points and provides consistency for flux
+    at control-volume faces. For the source term, *piece-wise constant profile* is used, implying a single value of the source
+    term in each cell. Note that for piece-wise constant profile, the derivatives are not defined at integration points, due to
+    jump discontinuity. So if fluxes will be inconsistent if piecewise-constant profile is used for temperature.
+    #+begin_export latex
+    \begin{center}
+    \includegraphics[scale=0.2]{pic/heat1D_profilePW.png}
+    \end{center}
+    #+end_export
+*** Implementation of Linearization
+    In Patakar's method, the solution of the linear system *is* the solution for the variables at the control volume center.\\
+    In our method, the solution of the linear system is the *correction* to apply to the previous iteration of the solution. \\
+    The correction method is preferred because:
+    * at convergence, the solution for the correction goes to zero $\rightarrow$ zero a good initial guess for the linear solver.
+    * linear system involves the residual vector. In Patankar's, there are more work to calculate the residual vector.
+*** Properties of the Discrete Algebraic Equations
+    Recall our algebraic equation for the linear system
+    #+begin_export latex
+    \begin{equation}
+    a_P\delta T_P + a_W\delta T_W + a_E \delta T_E = -r_P 
+    \end{equation}
+    #+end_export
+    In Rule 2, we require that $a_P > 0$ and $a_W, a_E < 0$. The reason for this is if we consider the case with no source,
+    and the solution converge, $r_P \rightarrow 0$:
+    #+begin_export latex
+    \begin{equation}
+    a_P\delta T_P = -a_W\delta T_W - a_E \delta T_E  
+    \end{equation}
+    #+end_export
+    Now, suppose both $T_P$ and $T_E$ are pertubed.  If either of these temperatures were to rise, then $T_P$ would also rise.
+    Similarly, if either temperatures were to drop, $T_P$ should also drop. Therefore, to ensure correct physical effect, if
+    $a_P > 0$ then $a_W, a_E > 0$.\\
+    Consider the two cells ($P$ and $E$) below:
+    #+begin_export latex
+    \begin{center}
+    \includegraphics[scale=0.2]{pic/heat1D_cell_combined.png}
+    \end{center}
+    #+end_export
+    At convergence, $r_P = 0$, the equation for the control volume $P$ is:
+    #+begin_export latex
+    \begin{equation}
+    F_{e,P}^d - F_{w,P}^d - S_PV_P = 0
+    \end{equation}
+    #+end_export
+    For the control volume $E$:
+    #+begin_export latex
+    \begin{equation}
+    F_{e,E}^d - F_{w,E}^d - S_EV_E = 0
+    \end{equation}
+    #+end_export
+    Adding these equations together gives:
+    #+begin_export latex
+    \begin{equation}
+    F_{e,P}^d - F_{w,P}^d +  F_{e,E}^d - F_{w,E}^d- S_PV_P - S_EV_E = 0
+    \end{equation}
+    #+end_export
+    Note that $F_{e,P}^d = F_{w,E}^d$ by continuity, i.e. the flux at cell $P$ going eastward should be the same flux going
+    from westward at cell $E$. If these are not equal, then it implies that there is a fictuous force at the face, which is
+    not reasonable. Therefore, our algebraic equation for control volume $P$ and $E$ becomes:
+    #+begin_export latex
+    \begin{equation}
+     F_{e,E}^d - F_{w,P}^d - S_PV_P - S_EV_E = 0
+    \end{equation}
+    #+end_export
+    The above equation demonstrates integral conservation: a balance of the total source term within the combined control volume with
+    the net diffusive flux from that same control volume. In addition, recall the definition of the diffusive flux:
+    #+begin_export latex
+    \begin{align}
+    F_{e,P}^d &= -k \frac{T_E-T_P}{\Delta x_{PE}} A_{e,P}\\
+    F_{w,E}^d &= -k \frac{T_E-T_P}{\Delta x_{PE}} A_{w,E}
+    \end{align}
+    #+end_export
+    From the gemeotry of the grid, $A_{e,P} = A_{w,E}$; therefore, it is in fact the two-point finite difference estimation of the
+    derivative that cause the fluxes to be equal. This is also due to the piecewise-linear profile that we assume. If we assume a
+    *parabolic profile* instead, there is no guarantee that the fluxes would be equal. Instead, we would have:
+    #+begin_export latex
+    \begin{align}
+    F_{e,P}^d &= f(T_W, T_P, T_E)\\
+    F_{w,E}^d &= f(T_P, T_E, T_{EE})
+    \end{align}
+    #+end_export
+    This means that the flux through the common face depends on different temperature, so we cannot be sure that the derivative from either
+    side is consistent. 
+    #+begin_export latex
+    \begin{center}
+    \includegraphics[scale=0.2]{pic/heat1D_profilePARABOLIC.png}
+    \end{center}
+    #+end_export
+*** Implemenation: [[file:1D_heat_diffusion.py][Python code]]

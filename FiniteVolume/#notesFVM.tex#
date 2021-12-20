@@ -1,4 +1,4 @@
-% Created 2021-12-12 Sun 16:24
+% Created 2021-12-18 Sat 12:53
 % Intended LaTeX compiler: pdflatex
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
@@ -15,13 +15,14 @@
 \usepackage{capt-of}
 \usepackage{hyperref}
 \usepackage{minted}
-\usepackage[a4paper,margin=1in, truedimen]{geometry} \usepackage{graphicx}
+\usepackage[a4paper,margin=0.75in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb}
+\usepackage{amsfonts} \usepackage{amsmath}
 \author{Max Le}
 \date{\today}
-\title{Notes on Finite Volume Method MME 9710 - Advanced CFD}
+\title{Notes on Finite Volume Method MME 9710}
 \hypersetup{
  pdfauthor={Max Le},
- pdftitle={Notes on Finite Volume Method MME 9710 - Advanced CFD},
+ pdftitle={Notes on Finite Volume Method MME 9710},
  pdfkeywords={},
  pdfsubject={},
  pdfcreator={Emacs 27.2 (Org mode 9.4.4)}, 
@@ -29,9 +30,13 @@
 \begin{document}
 
 \maketitle
+\tableofcontents \clearpage
 
-\section{Generic Conservation Equation}
-\label{sec:orgd44b5ea}
+
+\section{CHAPTER 1: INTRODUCTION}
+\label{sec:orgd8ce28d}
+\subsection{Generic Conservation Equation}
+\label{sec:orgea20825}
 Consider the following generic conservation equation:
 \begin{equation}
 \frac{\partial \phi}{\partial t} + \nabla \cdot (\textbf{u}\phi) + \nabla \cdot \textbf{J}_\phi = S_\phi
@@ -52,8 +57,8 @@ where the variables are defined as:
 \end{tabular}
 \end{center}
 
-\section{Mass Conservation Equation}
-\label{sec:orgcb0edd7}
+\subsection{Mass Conservation Equation}
+\label{sec:org7fe99c0}
 Setting \(\phi = \rho\), where \(\rho\) is the density. Also, mass conservation of a \texttt{continuous} substance does not
 have diffusive flux => \(\textbf{J}_\rho = 0\).
 \begin{equation}
@@ -71,8 +76,8 @@ have diffusive flux => \(\textbf{J}_\rho = 0\).
 \end{itemize}
 \end{itemize}
 
-\section{Momentum Conservation Equation}
-\label{sec:org8093e8a}
+\subsection{Momentum Conservation Equation}
+\label{sec:org7d864fc}
 Setting \(\phi = \rho \textbf{u}\). Diffusive flux term \(\textbf{J}_\textbf{u} = -\nabla \cdot \sigma\), where
 \(\sigma\) is the fluid stress tensor. 
 
@@ -100,8 +105,8 @@ For incompressible Newtonian fluid, we can rewrite \(\tau\) in terms of the dyna
 \textbf{u} + S_\textbf{u}
 \end{equation}
 
-\section{Energy Conservation Equation}
-\label{sec:org873ce7f}
+\subsection{Energy Conservation Equation}
+\label{sec:org6d199f0}
 Setting \(\phi = \rho h\) with \(h\) being the specific enthalpy of a substance at a given state. Thus, the unit for \(\phi\) is
 energy per unit volume. The diffusive flux is given by Fourier's law: \(J = -k \nabla \textbf{T}\) with \(k\) is the thermal conductivity.
 \begin{equation}
@@ -123,8 +128,8 @@ If we assume:
 
 where \(\alpha = \frac{k}{\rho c_p}\) is the thermal diffusivity. 
 
-\section{Discretization of the Generic Conservation Equation}
-\label{sec:org2150e07}
+\subsection{Discretization of the Generic Conservation Equation}
+\label{sec:org7ef75e4}
 Our generic variable, \(\phi\) is a function of of spatial and time: \(\phi = \phi (\textbf{x},t)\), where
 \(\textbf{x} = (x,y,z)\). Note that spatial variable can be influenced "\textsubscript{one} way\_" or "\textsubscript{two} way\_", i.e.
 \begin{itemize}
@@ -150,8 +155,8 @@ Recall our generic conservation equation:
 We consider the diffusion term or \textbf{elliptic PDE} :  \(\boxed{\nabla \cdot \textbf{J}_\phi}\) to be \uline{two-way in space}\\
 Likewise, the convection term or \textbf{parabolic PDE} :  \(\boxed{\nabla \cdot (\textbf{u}\phi)}\) to be \uline{one-way in space} 
 
-\section{Main idea behind Discretization}
-\label{sec:orgf8cd562}
+\subsection{Main idea behind Discretization}
+\label{sec:org62b7dac}
 Our goal is to:
 \begin{itemize}
 \item replace the PDEs' continuous solution with \uline{discrete} solution, at \uline{specific location} that approximates the continuous
@@ -169,10 +174,10 @@ balanced.
 \includegraphics[scale=0.2]{pic/finiteVolumeElement.png}
 \end{center}
 \end{itemize}
-\section{Determine Cell Centre + Face Integration Points}
-\label{sec:org1e6a7d0}
-Cell centre => location of solution variables.\\
-Points on face => fluxes are evaluated.\\
+\subsection{Determine Cell Centre + Face Integration Points}
+\label{sec:org6d7a4d5}
+\uline{Cell centre} => location of \uline{solution} variables.\\
+Points on \uline{face} => \uline{fluxes} are evaluated.\\
 Consider a volume integral of a quantity \(\phi\), we may express this integral in discrete form as follow:
 \begin{equation}
 \int_V \phi dV \approx \phi_P V_P 
@@ -193,5 +198,244 @@ We note that \(\phi_P\) and its derivatives are constants:
 \begin{equation}
 \int_V \phi dV \approx \phi_P dV + \nabla \phi_P \int_V (\textbf{x}-\textbf{x}_P) dV + \nabla^2 \phi_P \int_V (\textbf{x}-\textbf{x}_P)(\textbf{x}-\textbf{x}_P)dV + .... O(\delta^3) 
 \end{equation}
-Because our \(\textbf{x}_P\) point is at centroid, so \uline{\(\int_V (\textbf{x}-\textbf{x}_P) dV = 0\)} 
+Because our \(\textbf{x}_P\) point is at centroid, so \(\int_V (\textbf{x}-\textbf{x}_P) dV = 0\). Likewise, the last term is also neglected,
+resulting in:
+\begin{equation}
+\int_V \phi dV \approx [\phi_V + O(\delta^2)]V_P
+\end{equation}
+This means that there is a second order error when approximating the cell volume in this way.  This is OK because the accuracy of
+the method is also second order.\\
+\textbf{Note}: If our \$\textbf{x}\textsubscript{P}\} does not lie at the centroid of the cell. The second term,\(\int_V (\textbf{x}-\textbf{x}_P) dV\) does not go
+to zero, making our approximation to be 1st order, which is worse. 
+\subsection{Transient term}
+\label{sec:orgc0bc414}
+Here we deal with the transient term, \(\frac{\partial \phi}{t}\). Discretization of this term relies on:
+\begin{itemize}
+\item order of accuracy
+\item implicit vs explicit
+\end{itemize}
+The idea is to integrate this term over control volume \(V_P\) and some time step \(\Delta t = t_1 - t_0\) to get
+the formula for the discretization.
+\begin{equation}
+\int_{t_0}^{t_1} \int_V \frac{\partial \phi}{\partial t}dVdt \approx (\phi V_P)^{t_1} - (\phi V_P)^{t_0} 
+\end{equation}
+\subsection{Advection term}
+\label{sec:orgfef4267}
+Here we deal with the advection term, \(\nabla \cdot (\textbf{u} \phi)\). Similar to the transient term, the formula for the
+discretization can be obtained by integrating over the control volume \(V_P\). We also employ Gauss' theorem to convert
+\uline{volume integral} to \uline{surface integral}:
+\begin{equation}
+\int_V \nabla \cdot (\textbf{u}\phi)dV = \int_S (\textbf{u}\phi) \cdot \textbf{n}dS
+\end{equation}
+For the surface integral, we approximate by summing up over the faces surrounding the cell, each with area \(A_{ip}\).
+\begin{equation}
+\int_S (\textbf{u}\phi) \cdot \textbf{n}_{ip}dS \approx \sum_{i=0}^{N_{ip}-1} \textbf{u}_{ip} \cdot \textbf{n}_{ip} \phi_{ip}A_{ip}
+\end{equation}
+\textbf{Note}:
+\begin{itemize}
+\item using C program notation, so we sum from 0 till \(N_{ip}-1\)
+\item approximate \(\textbf{u}_{ip}\) by many interpolation methods
+\item interpolating \(\phi_{ip}\) carefully to obtain \uline{stable} numerical method.
+\end{itemize}
+\subsection{Diffusion term}
+\label{sec:org6103b3f}
+Now, we deal with the diffusion term, \(\nabla \cdot \textbf{J}_\phi\). Similar to the advection term, we integrate over a control
+volume, then apply Gauss' theorem
+\begin{equation}
+\int_V \nabla \cdot \textbf{J}_\phi dV = \int_S \textbf{J}_\phi \cdot \textbf{n}dS
+\end{equation}
+Again, the surface integral is approximated as discrete sum over the faces surrounding the cell:
+\begin{equation}
+\int_S \textbf{J}_\phi \cdot \textbf{n}dS \approx \sum_{i=0}^{N_{ip}-1} \textbf{J}_{\phi, ip} \cdot \textbf{n}_{ip}\textbf{A}_{ip}
+\end{equation}
+where the flux, \(\textbf{J}_{\phi,ip}\) is interpolated from neighboring cell values. 
+\subsection{Source term}
+\label{sec:orgfcf3220}
+Recall our source term: \(S_\phi\), we assume that the source term is \uline{piecewise continuous}, with one specific value, \(S_\phi\),
+being represented by each cell. We can then write:
+\begin{equation}
+\int_V S_\phi dV \approx S_\phi V_P
+\end{equation}
+Generally, the source term may depend on \(\phi\) so linearization is needed to obtain \uline{stable} numerical method. 
+\subsection{Linearization}
+\label{sec:orgb120d60}
+With regard to our last point about \(J_\phi\), the discretized terms depend non linearly on the solution. This non-linearity
+is caused by:
+\begin{itemize}
+\item source term depend non linearly on primitive variable, e.g. \(J_\phi\).
+\item non linearities in the governing equation, e.g. advection term \(\nabla \cdot (\textbf{u} \phi)\)
+\item on non-orthogonal grid, gradient correction terms are needed <= these are non linear.
+\end{itemize}
+To linearize, we assume the governing PDE is represented by the following general differential operator
+\begin{equation}
+L(\phi^*) = 0
+\end{equation}
+where:\\
+\begin{itemize}
+\item \(\phi^*\) = the continuous solution to the PDE
+\item Note that to solve a PDE using finite volume, the continuous solution \(\phi^*\) is approximated by the discrete solution vector
+\(\phi \in \mathbb{R}\) on \(N\) number of control volume. Our PDE is then integrated over each control volume and each term in the
+governing equation is approximated using the discrete solution \(\phi\)
+\item Of course, the numerical solution will not satisfy the discretized equation exactly; rather we will have a residual,
+\(\textbf{r} \in \mathbb{R}^N\).
+\end{itemize}
+We expand the residual about the solution \(\phi_i\) at iteration \(i\), and find the solution where \(r = 0\):
+\begin{equation}
+\textbf{r}(\phi_i) + \left. \frac{\partial \textbf{r}}{\partial \phi}\right|_{\phi_i}(\phi - \phi_i) = 0
+\end{equation}
+We define the \textbf{Jacobian of the residual vector} as:
+\begin{equation}
+\textbf{J}(\phi) = \frac{\partial \textbf{r}}{\partial \phi}
+\end{equation}
+We use this to update according to fix point iteration:
+\begin{equation}
+\phi = \phi_i + \Delta \phi_i
+\end{equation}
+where:
+\begin{equation}
+\Delta \phi = (\phi - \phi_i)
+\end{equation}
+and:
+\begin{equation}
+\textbf{J}(\phi_i)\Delta \phi = -\textbf{r}(\phi_i)
+\end{equation}
+The remaining unknowns are: the residual vector \(\textbf{r}\) and Jacobian matrix \(\textbf{J}(\phi_i)\).\\
+\textbf{Note}: we can express the linear system for a control volume P as:
+\begin{equation}
+a_P\delta \phi_P + \sum_{nb} a_{nb}\delta \phi_{nb} = -r_P
+\end{equation}
+where \(nb\) is sum over all neighboring cells.  The coefficients are defined as:
+\begin{align}
+a_P &= \frac{\partial r_P}{\partial \phi_P}\\
+a_{nb} &= \frac{\partial r_P}{\partial \phi_{nb}}
+\end{align}
+\section{CHAPTER 2: STEADY DIFFUSION EQUATION}
+\label{sec:org9bf159b}
+\subsection{Problem Definition}
+\label{sec:orgf71513c}
+We consider the solution of a \uline{steady}, \uline{1D} heat diffusion equation
+\begin{equation}
+-k \nabla^2 T - S = 0
+\end{equation}
+\subsection{Discretization}
+\label{sec:org13a7f99}
+Recall our diffusion term can be discretized as:
+\begin{equation}
+\int_S \textbf{J} \cdot \textbf{n} dS \approx \sum_{i=0}^{N_{ip}-1} \textbf{J}_{ip}\cdot \textbf{n}_{ip}A_{ip}
+\end{equation}
+Our flux \(\textbf{J}\) here is the \uline{diffusive} flux, so: \(\textbf{J} = -k \nabla T\). Thus:
+\begin{equation}
+\int_S \textbf{J} \cdot \textbf{n} dS \approx -\sum_{i=0}^{N_{ip}-1} k_{ip} \nabla T_{ip}  \cdot \textbf{n}_{ip}A_{ip}
+\end{equation}
+We assume constant thermal conductivity, \(k_{ip} = k\). A 1D control volume, with West/East faces and unit vectors drawn, is shown below:
+\begin{center}
+\includegraphics[scale=0.2]{pic/heat1D_CV.png}
+\end{center}
+Since we are in 1D, our unit vector is in the \(\textbf{i}\) only.\\
+Thus, \(\nabla T \cdot \textbf{n} = \nabla T \cdot \textbf{i}\).\\
+But, \(\nabla T \cdot \textbf{i} = \left < \frac{\partial T}{\partial x} \textbf{i} + \frac{\partial T}{\partial y} \textbf{j} + \frac{\partial T}{\partial z} \textbf{k}
+  \right > \cdot \left <1 \textbf{i} + 0 \textbf{j} + 0 \textbf{k}    \right> = \frac{\partial T}{\partial x}\). \\
+With these points in mind, the discretization for the diffusion term is simplified to:
+\begin{equation}
+\int_S \textbf{J} \cdot \textbf{n} dS \approx k \left .\frac{\partial T}{\partial x}\right|_w A_w
+- k \left .\frac{\partial T}{\partial x}\right|_e A_e 
+\end{equation}
+The diagram below shows the cell locations and the nomenclature for the distance between them, note how \(\Delta x\) is center-center
+\begin{center}
+\includegraphics[scale=0.2]{pic/heat1D_cell.png}
+\end{center}
+We apply \uline{finite differences} to the derivatives in the diffusion term, i.e.:
+\begin{equation}
+k \left .\frac{\partial T}{\partial x}\right|_w A_w - k \left .\frac{\partial T}{\partial x}\right|_e A_e
+= k\frac{T_P-T_W}{\Delta x_{WP}}A_w - k\frac{T_E-T_P}{\Delta x_{PE}}A_e
+\end{equation}
+Our discretized source term is simply:
+\begin{equation}
+\int_V SdV \approx S_PV_P
+\end{equation}
+where \(S_P\) = value of source term \textbf{within} the cell, and \(V_P\) = cell volume.\\
+Put everything on one side, we can form the \uline{residual equation} for the cell \(\textbf{P}\) as:
+\begin{equation}
+r_P = - k\frac{T_E-T_P}{\Delta x_{PE}}A_e + k\frac{T_P-T_W}{\Delta x_{WP}}A_w - S_PV_P
+\end{equation}
+or expressing in terms of the diffusive fluxes, \(\textbf{F}^d\), through each face:
+\begin{equation}
+r_P = F_{e}^d - F_{w}^d - S_PV_P
+\end{equation}
+where:\\
+\begin{alignat}{2}
+F_{e}^d &= - k\frac{T_E-T_P}{\Delta x_{PE}}A_e &&= -D_e(T_E- T_P)\\
+F_{w}^d &= - k\frac{T_P-T_W}{\Delta x_{WP}}A_w &&= -D_w(T_P- T_W)\\
+D_e &= \frac{kA_e}{\Delta x_{PE}}\\
+D_w &= \frac{kA_w}{\Delta x_{WP}}
+\end{alignat}
+Our cell residual equation is then:
+\begin{equation}
+r_P = D_w (T_P-T_W)-D_e(T_E-T_P)-S_PV_P
+\end{equation}
+The linearized coefficients are then calculated as:
+\begin{align}
+a_P &= \frac{\partial r_P}{\partial T_P} = D_w + D_e - \frac{\partial S_P}{\partial T_P}V_P\\
+a_W &= \frac{\partial r_P}{\partial T_W} = -D_w\\
+a_E &= \frac{\partial r_P}{\partial T_E} = -D_e
+\end{align}
+Recall that we can form an algebraic system of equation for each control volume like this:
+\begin{align}
+a_P\delta \phi_P + \sum_{nb} a_{nb}\delta \phi_{nb} &= -r_P\\
+a_P\delta T_P + a_W\delta T_W + a_E \delta T_E &= -r_P 
+\end{align}
+The above linear system of equations can be written as as tridiagonal matrix, like this:
+\begin{center}
+\includegraphics[scale=0.2]{pic/heat1D_tridiagonal.png}
+\end{center}
+\textbf{Note}: The first and last row only has 2 non zero elements each. This is because these are the left most/right most side and they are
+adjacent to the domain boundary. Therefore, special \uline{boundary conditions} are needed to be set. \\
+In matrix notation, we are solving:
+\begin{equation}
+\textbf{A}\textbf{x} = \textbf{b}  
+\end{equation}
+where \(\textbf{A}\) is the Jacobian matrix, \(\textbf{b} = \textbf{-r}\) is the residual vector, \(\textbf{x} = \delta \textbf{T}\)
+is the solution correction. At each current iteration \(i\), the solution is updated according to:
+\begin{equation}
+\textbf{T} = \textbf{T}_i + \delta \textbf{T}i
+\end{equation}
+\subsection{Source Terms}
+\label{sec:org2d42775}
+Our source term can have many forms, depending on the type of heat source. We will assume \emph{external convection}
+and \emph{radiation exchange}:
+\begin{itemize}
+\item For external convection:
+\begin{equation}
+\frac{S_{conv,P}}{V_P} = -hA_0(T_P-T_{\infty,c})
+\end{equation}
+where:
+\begin{itemize}
+\item \(h\) is the convective coefficient.
+\item \(A_0\) is external surface area of the cell \(P\).
+\item \(T_P\) is temperature at the centroid of cell \(P\).
+\item \$T\textsubscript{\(\infty\),c} is the ambient temperature for the convection process.
+\end{itemize}
+\item For radiation exchange:
+\begin{equation}
+\frac{S_{rad}}{V_P} = -\epsilon \sigma A_0(T_P^4 - T_{\infty,r}^4)
+\end{equation}
+where:
+\begin{itemize}
+\item \(\epsilon\) is the surface emissivity.
+\item \(\sigma\) is the Stefan-Boltzmann constant.
+\item \$T\textsubscript{\(\infty\),r}
+\end{itemize}
+\end{itemize}
+\subsection{Discussion of Discretization Procedure}
+\label{sec:org330633c}
+\subsubsection{Temperature Profile Assumptions}
+\label{sec:org92c01d7}
+When computing the diffusive fluxes through the faces, we assumed a \textbf{piecewise-linear profile} for the temperature.
+This ensures that the derivatives are defined at the integration points and provides consistency for flux
+at control-volume faces. For the source term, \textbf{piece-wise constant profile} is used, implying a single value of the source
+term in each cell. Note that for piece-wise constant profile, the derivatives are not defined at integration points, due to
+jump discontinuity. So if fluxes will be inconsistent if piecewise-constant profile is used for temperature.
+\begin{center}
+\includegraphics[scale=0.2]{pic/heat1D_profilePW.png}
+\end{center}
 \end{document}
