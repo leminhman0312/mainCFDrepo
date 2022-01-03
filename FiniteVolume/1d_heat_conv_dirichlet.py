@@ -268,6 +268,8 @@ class RobinBC:
 
 
 
+    
+
 # class DiffusionModel defining a defusion model
 class DiffusionModel:
     def __init__(self,grid,phi,gamma,west_bc,east_bc):
@@ -360,6 +362,30 @@ def solve(coeffs):
 
 
 
+# class defining a surface convection model
+class SurfaceConvectionModel:
+    # constructor
+    def __init__(self,grid,T,ho,To):
+        self._grid = grid
+        self._T = T
+        self._ho = ho
+        self._To = To
+
+    # add surface convection terms to coefficient arrays
+    def add(self,coeffs):
+        # calculate the source term
+        source = self._ho * self._grid.Ao*(self._T[1:-1]-self._To)
+
+        # calculat linearization coefficients
+        coeffP = self._ho * self._grid.Ao
+
+        # add to coefficient arrays
+        coeffs.accumulate_aP(coeffP)
+        coeffs.accumulate_rP(source)
+
+        return coeffs
+        
+        
 
 
 # Solving the 1D steady conduction with Dirichet BC
@@ -376,7 +402,11 @@ maxIter = 100
 converged=1e-6
 
 # thermal properties
-k = 0.1
+k = 100
+
+# define convection parameters
+ho = 25
+To = 200
 
 # coefficients
 coeffs = ScalarCoeffs(mygrid.ncv)
@@ -389,7 +419,8 @@ T = T0*np.ones(mygrid.ncv+2)
 
 # # # boundary condition
 west_bc = DirichletBC(T, mygrid, 400, BoundaryLocation.WEST)
-east_bc = DirichletBC(T, mygrid, 300, BoundaryLocation.EAST)
+# east_bc = DirichletBC(T, mygrid, 300, BoundaryLocation.EAST)
+east_bc = NeumannBC(T, mygrid, 0, BoundaryLocation.EAST)
 
 # # # apply boundary conditions
 west_bc.apply()
@@ -402,16 +433,21 @@ T_solns = [np.copy(T)]
 # # # define the diffusion model
 diffusion = DiffusionModel(mygrid, T, k, west_bc, east_bc)
 
+# define the surface convection model
+surfaceConvection = SurfaceConvectionModel(mygrid,T,ho,To)
+
 # # # iterate until the solution is converged
 for i in range(maxIter):
+
     # zero the coeff and add 
     coeffs.zero()
     coeffs = diffusion.add(coeffs)
+    coeffs = surfaceConvection.add(coeffs)
 
     # compute residual and check for convergence
     maxResid = norm(coeffs.rP, np.inf)
     avgResid = np.mean(np.absolute(coeffs.rP))
-    print("Iteration = {} ; Resid = {} ; Avg. Resid = {}".format(i,maxResid, avgResid) )
+    print("Iteration = {} ; Max Resid = {} ; Avg Resid = {}".format(i,maxResid, avgResid) )
     if maxResid < converged:
         break
 
@@ -419,7 +455,7 @@ for i in range(maxIter):
     dT = solve(coeffs)
 
     # update the solution and boundary conditions
-    T[1:-1] = T[1:-1] + dT
+    T[1:-1] += dT
     west_bc.apply()
     east_bc.apply()
 
@@ -429,13 +465,14 @@ for i in range(maxIter):
 
 
 # plotting
+i = 0
 for Ti in T_solns:
     plt.plot(mygrid.xP, Ti, label = str(i))
     i += 1
     
 plt.xlabel('X')
 plt.ylabel('T')
-plt.legend()
+plt.legend(loc='right')
 plt.show()
 
 
