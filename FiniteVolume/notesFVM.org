@@ -1,9 +1,37 @@
 #+TITLE: Notes on Finite Volume Method MME 9710
 #+AUTHOR: Max Le
 #+LATEX_HEADER: \usepackage[margin=1in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb}
-#+latex_header: \usepackage[scaled]{helvet} \renewcommand\familydefault{\sfdefault}
+#+LATEX_HEADER: \usepackage[scaled]{helvet} \renewcommand\familydefault{\sfdefault}
+#+LATEX_HEADER: \usepackage{listings} \usepackage{xcolor}
+#+LATEX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} \definecolor{codegray}{rgb}{0.5,0.5,0.5} \definecolor{codepurple}{rgb}{0.58,0,0.82} \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 #+DATE: \today
 #+OPTIONS: tex:t 
+
+
+* Latex code listing settings :ignore:
+#+begin_export latex
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\sffamily\small,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+#+end_export
+
+
 
 * INTRODUCTION
 ** Generic Conservation Equation
@@ -579,9 +607,9 @@
     \includegraphics[scale=0.2]{pic/heat1D_profilePARABOLIC.png}
     \end{center}
     #+end_export
-** Implemenation: [[file:1D_heat_diffusion.py][Python code]]
+** Implemenation: [[file:1D_heat_diffusion_steady.py][Python Code]]
   #+begin_export latex
-  \clearpage
+  \lstinputlisting[language=Python]{1D_heat_diffusion_steady.py}
   #+end_export
 * TRANSIENT 1D HEAT DIFFUSION
 ** Problem Definition
@@ -692,9 +720,6 @@
    \end{equation}
    #+end_export
    Note how our timestep is related to the square of the grid size, so the a fine grid will have a very small "$\Delta x^2$".
-   #+begin_export latex
-   \newpage \noindent
-   #+end_export
    To study this, we consider an iron bar with $\alpha = 23.1 \times 10^{-6}$ [$m^2/s$] at various grid sizes:
    #+NAME: explicit_timestep
    |---------------+-----------------|
@@ -752,7 +777,7 @@
 *** General idea
     We consider integration over a special *space-time control volume*, with:
     - the time faces being located at $t-\Delta t/2, t+ \Delta t/2$
-    - the solution values are stored at $t, t - \Delta t, t - 2\Delta t...$.
+    - the solution values are stored at $t, t - \Delta t, t - 2\Delta t$.
     #+begin_export latex
     \begin{center}
     \includegraphics[scale=0.3]{pic/cv_2nd_order_implicit.png}
@@ -879,6 +904,9 @@
     #+end_export
 ** Implementation: [[file:1d_heat_diffusion_transient.py][Python code]]
    #+begin_export latex
+   \lstinputlisting[language=Python]{1d_heat_diffusion_transient.py}
+   #+end_export
+   #+begin_export latex
    \clearpage
    #+end_export
 * ONE-DIMENSIONAL CONVECTION OF A SCALAR
@@ -942,7 +970,7 @@
    #+begin_export latex
    \begin{equation}
    \begin{aligned}
-   &\frac{(\rho c_p T_P V_P)^{t+\Delta t /2 } - (\rho c_p T_P V_P)^{t-\Delta t /2}}{\Delta t}  + \do{m}_e c_p T_e - \dot{m}_w c_p T_w\\
+   &\frac{(\rho c_p T_P V_P)^{t+\Delta t /2 } - (\rho c_p T_P V_P)^{t-\Delta t /2}}{\Delta t}  + \dot{m}_e c_p T_e - \dot{m}_w c_p T_w\\
    &= -D_w (T_P-T_W) + D_e(T_E-T_P) + S_P V_P
    \end{aligned}
    \end{equation}
@@ -966,14 +994,42 @@
     #+begin_export latex
     \begin{equation}
     \begin{aligned}
-    &\frac{(\rho c_p T_P V_P)^{t+\Delta t /2 } - (\rho c_p T_P V_P)^{t-\Delta t /2}}{\Delta t} + \do{m}_e c_p (T_e-T_P) - \dot{m}_w c_p (T_w-T_P)\\
+    &\frac{(\rho c_p T_P V_P)^{t+\Delta t /2 } - (\rho c_p T_P V_P)^{t-\Delta t /2}}{\Delta t} + \dot{m}_e c_p (T_e-T_P) - \dot{m}_w c_p (T_w-T_P)\\
     &= -D_w (T_P-T_W) + D_e(T_E-T_P) + S_P V_P
     \end{aligned}
     \end{equation}
     #+end_export
     This means that if there is a positive imbalance of mass ($\dot{m_e} > \dot{m}_w$), there will be a negative source in the energy equation
     to counter balance. If there is a negative imbalance, the opposite is true. This step helps with the stability of the numerical method such that
-    the equations are again independent of the temperature level. 
+    the equations are again independent of the temperature level.
+
+** Advection term with Explicit Time Integration
+   Assume we can interpolate the integration point values in the advection term using a piecewise linear approximation:
+   #+begin_export latex
+   \begin{align*}
+   T_e &= \frac{1}{2}(T_P+T_E)\\
+   T_w &= \frac{1}{2}(T_W+T_P)
+   \end{align*}
+   #+end_export
+   Assuming no source term and use an explicit time integration scheme, and keeping the $T_P$ term arising from subtracting the
+   mass conservation from the energy equation as implicit (i.e. at current timestep). We get the following discretized equation:
+   #+begin_export latex
+   \begin{equation*}
+   \begin{aligned}
+   \frac{\rho c_p V_P (T_P-T_P^o)}{\Delta t} + &\dot{m}_e c_p \left[\frac{1}{2}(T_P^o+T_E^o) - T_P \right] - \dot{m}_w c_p \left[\frac{1}{2}(T_W^o+T_P^o) - T_P \right]\\
+   &= -D_w(T_P^o-T_W^o) + D_e(T_E^o-T_P^o)
+   \end{aligned}
+   \end{equation*}
+   #+end_export
+   where $'o'$ denotes values at previous timestep, and those without superscripts are for current timestep (i.e. those being solved).
+   We can then group the terms according to their temperature:
+   # #+begin_export latex
+   # \begin{equation*}
+   # \begin{aligned}
+   # \left(\frac{\rho c_p V_P}{\Delta t} + c_p \dot{m}_w - c_p \dot{m}_e \right)T_P = 
+   # \end{aligned}
+   # \end{equation*}
+   # #+end_export
 
 
 
