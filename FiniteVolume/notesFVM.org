@@ -1,12 +1,11 @@
 #+TITLE: Notes on Finite Volume Method MME 9710
 #+AUTHOR: Max Le
-#+LATEX_HEADER: \usepackage[a4paper,margin=1in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb}
-#+LATEX_CLASS_OPTIONS: [14pt]
-#+LATEX_HEADER: \usepackage{amsfonts} \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage[margin=1in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb}
+#+latex_header: \usepackage[scaled]{helvet} \renewcommand\familydefault{\sfdefault}
 #+DATE: \today
 #+OPTIONS: tex:t 
 
-* CHAPTER 1: INTRODUCTION
+* INTRODUCTION
 ** Generic Conservation Equation
    Consider the following generic conservation equation:
    #+begin_export latex
@@ -309,11 +308,42 @@
    a_{nb} &= \frac{\partial r_P}{\partial \phi_{nb}}
    \end{align}
    #+end_export
-
+** Four Basic Rules
+   Outlined by Patankar(1980), these 4 rules are:
+   * *Rule 1: Consistency at control volume faces\\*
+     For common faces between cells, the flux through those common faces must be the same when evaluated at each cell.
+     If this is not the case, then it means there is an artificial source of the energy at the face. 
+   * *Rule 2: $\alpha_p > 0$ and $\alpha_{nb} < 0$*\\
+     Consider situations involving only convection and diffusion and all other conditions unchanged: if $\phi$ in 1 cell
+     increases, then we can expect $\phi$ in the neighboring cells to increase as well. The only way that this could happen is in this equation
+    #+begin_export latex
+    \begin{equation*}
+    a_P\delta \phi_P + \sum_{nb} a_{nb}\delta \phi_{nb} = -r_P
+    \end{equation*}
+    #+end_export
+    $a_p$ must have opposite sign from each of its $a_{nb}$ coefficients, just so that $\delta \phi_p$ and $\delta \phi_{nb}$
+    have the same signs and $r_p$ is unchanged. 
+   * *Rule 3: Negative slope linearization of source terms*\\
+     Suppose we have a source term in the form: $S_\phi = a + b\phi_P$. If this is moved to the LHS, the coefficient $a_P$ can be negative
+     if $b$ is positive. So we require that $b < 0$, or negative slope linearization. The idea is that a positive slope linearization would be
+     unstable because the source would cause the variables to increase, which would then increase the source term. This would continue indefinitely
+     and without bounds. In terms of heat transfer, we can have a heat source that grows with temperature and also a heat sink for removal of temperature.
+     This is done to avoid an uncontrolled increase in temperature. 
+   * *Rule 4: Sum of neighboring coefficients*\\
+     Our governing equations contain derivatives of dependent variables, i.e. both $\phi$ and $\phi+c$ will satisfy the same governing equations.
+     Thinking practically, this means that temperature field in both Kelvin and Celcius would both satisfy the same discretized equations, because Celcius and Kelvin
+     scale are related via a constant.  For this to be true, we require:
+     #+begin_export latex
+     \begin{equation*}
+     a_p = - \sum_{nb} a_{nb}
+     \end{equation*}
+     #+end_export 
+     Note that in the case of the linearization of the source term above, it indicates that same equation cannot be used for both $\phi$
+     and $\phi+c$. So in this case, make sure to modify the source term coefficients appropriately. 
    #+begin_export latex
    \clearpage
    #+end_export
-* CHAPTER 2: STEADY DIFFUSION EQUATION
+* STEADY DIFFUSION EQUATION
 ** Problem Definition
    We consider the solution of a _steady_, _1D_ heat diffusion equation
    #+begin_export latex
@@ -553,7 +583,7 @@
   #+begin_export latex
   \clearpage
   #+end_export
-* CHAPTER 3: TRANSIENT 1D HEAT DIFFUSION
+* TRANSIENT 1D HEAT DIFFUSION
 ** Problem Definition
    In contrast to the steady case, here we are solving the following transient 1D heat diffusion equation
    #+begin_export latex
@@ -848,3 +878,106 @@
     \end{equation*}
     #+end_export
 ** Implementation: [[file:1d_heat_diffusion_transient.py][Python code]]
+   #+begin_export latex
+   \clearpage
+   #+end_export
+* ONE-DIMENSIONAL CONVECTION OF A SCALAR
+** Problem Definition
+   For thermal convection, we need the advection-diffusion equation. So far, we only dealt with diffusion, now we add
+   the advection term which results in:
+   #+begin_export latex
+   \begin{equation}
+   \frac{\partial (\rho c_p T)}{\partial t} + \nabla \cdot (\rho c_p \textbf{u}T) = k \nabla^2 T + S
+   \end{equation}
+   #+end_export
+   assuming constant $\rho$ and $c_p$. We also assume that the flow field $\textbf{u}$ is known,
+   and we only use it to advect and solve for the temperature field. To preserve continuity across cells, we also
+   define a mass conservation equation without mass source.
+   #+begin_export latex
+   \begin{equation}
+   \frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \textbf{u}) = 0
+   \end{equation}
+   #+end_export
+** Discretization
+   Just like we did before, we now integrate the advection-diffusion equation through space and time:
+   #+begin_export latex
+   \begin{equation}
+   \int_{t_0}^{t_1} \int_V \frac{\partial (\rho c_p T)}{\partial t}dtdV + \int_{t_0}^{t_1} \int_V \nabla \cdot (\rho c_p \textbf{u}T)dtdV
+   = \int_{t_0}^{t_1} \int_V k \nabla^2 T dVdt + \int_{t_0}^{t_1} \int_V SdVdt
+   \end{equation}
+   #+end_export
+   Integration of the transient diffusion equation is covered. Here, we deal with the advection term.
+   Using the Gauss' divergence theorem to convert volume integral to surface integral:
+   #+begin_export latex
+   \begin{equation}
+   \int_V \nabla \cdot (\rho c_p \textbf{u}T)dV = \int_S (\rho c_p \textbf{u}T)\cdot \textbf{n}dS
+   \end{equation}
+   #+end_export
+   The surface integral is then approximated as discrete sum over the integration points
+   #+begin_export latex
+   \begin{equation}
+   \int_S (\rho c_p \textbf{u}T)\cdot \textbf{n}dS = \sum_{i = 0}^{N_{ip}-1} (\rho c_p \textbf{u}T) \cdot \textbf{n}_{ip} \textbf{A}_{ip}
+   \end{equation}
+   #+end_export
+   For 1D flow across control volume $P$, this results in:
+   #+begin_export latex
+   \begin{equation}
+   \sum_{i = 0}^{N_{ip}-1} (\rho c_p \textbf{u}T) \cdot \textbf{n}_{ip} \textbf{A}_{ip} = \rho c_p u_e T_e A_e - \rho c_p u_w T_w A_w
+   \end{equation}
+   #+end_export
+   Or in terms of the mass flux, $\dot{m} = \rho u A$:
+   #+begin_export latex
+   \begin{equation}
+   \sum_{i = 0}^{N_{ip}-1} (\rho c_p \textbf{u}T) \cdot \textbf{n}_{ip} \textbf{A}_{ip} = \dot{m}_e c_p T_e  - \dot{m}_w c_p T_w 
+   \end{equation}
+   #+end_export
+   Note how the $c_p T$ terms are similar to some forms of internal energy (enthalpy). Thus, we can think off the above equation as the difference
+   in energy between 2 parcels of fluids, one with internal energy $c_p T_e$ and one with internal energy $c_p T_w$
+   #+begin_export latex
+   \begin{center}
+   \includegraphics[scale=0.3]{pic/advection_diffusion_parcel.png}
+   \end{center}
+   #+end_export
+   As a result, our discretized energy equation becomes:
+   #+begin_export latex
+   \begin{equation}
+   \begin{aligned}
+   &\frac{(\rho c_p T_P V_P)^{t+\Delta t /2 } - (\rho c_p T_P V_P)^{t-\Delta t /2}}{\Delta t}  + \do{m}_e c_p T_e - \dot{m}_w c_p T_w\\
+   &= -D_w (T_P-T_W) + D_e(T_E-T_P) + S_P V_P
+   \end{aligned}
+   \end{equation}
+   #+end_export
+   _Note_:
+   * transient term is like before, evaluated at time $t + \Delta t/2$ and $t - \Delta t/2$.
+   * our discretization scheme is *NOT* completed, because we still do not know how to calculate mass flux and temperature
+     at integration points, namely $\dot{m}_e, \dot{m}_w$ and $T_e, T_w$.
+   * we must consider whether the given equation is independent of temperature level according to Rule 4. One can say that it has to
+     be independent because transient, diffusion, advection terms involve only derivative of temperature. This is true, if mass is conserved
+     ($\dot{m}_e = \dot{m}_w$).  For 1D, this is easy to ensure. For multidimensional problems, this is difficult. In other words, we cannot
+     assure that the numerical mass fluxes will always be conserved. This can lead to major problem, because if mass is not conserved, one
+     may think that there is an energy source (or sink) within the domain.
+   * to get around the mass conservation problem, we substract the discretized mass equation from the energy equation. Assuming constant density:
+     #+begin_export latex
+     \begin{equation*}
+     \dot{m}_e - \dot{m}_w = 0
+     \end{equation*}
+     #+end_export
+     multiply this by $T_P$ and $C_P$ and subtracting from the discretized equation:
+    #+begin_export latex
+    \begin{equation}
+    \begin{aligned}
+    &\frac{(\rho c_p T_P V_P)^{t+\Delta t /2 } - (\rho c_p T_P V_P)^{t-\Delta t /2}}{\Delta t} + \do{m}_e c_p (T_e-T_P) - \dot{m}_w c_p (T_w-T_P)\\
+    &= -D_w (T_P-T_W) + D_e(T_E-T_P) + S_P V_P
+    \end{aligned}
+    \end{equation}
+    #+end_export
+    This means that if there is a positive imbalance of mass ($\dot{m_e} > \dot{m}_w$), there will be a negative source in the energy equation
+    to counter balance. If there is a negative imbalance, the opposite is true. This step helps with the stability of the numerical method such that
+    the equations are again independent of the temperature level. 
+
+
+
+
+
+
+
