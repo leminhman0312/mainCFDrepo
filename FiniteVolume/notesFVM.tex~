@@ -1,4 +1,4 @@
-% Created 2022-01-27 Thu 20:17
+% Created 2022-02-10 Thu 11:29
 % Intended LaTeX compiler: pdflatex
 \documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
@@ -15,9 +15,9 @@
 \usepackage{capt-of}
 \usepackage{hyperref}
 \usepackage{minted}
-\usepackage[margin=1in, truedimen]{geometry} \usepackage{graphicx} \usepackage{amssymb}
-\usepackage[scaled]{helvet} \renewcommand\familydefault{\sfdefault}
-\usepackage{listings} \usepackage{xcolor}
+\usepackage[margin=1in]{geometry} \usepackage{graphicx} \usepackage{amssymb} \usepackage{amsmath}
+\usepackage[scaled=1.05]{helvet} \renewcommand\familydefault{\sfdefault}
+\usepackage{listings} \usepackage{xcolor} \usepackage{hyperref}
 \definecolor{codegreen}{rgb}{0,0.6,0} \definecolor{codegray}{rgb}{0.5,0.5,0.5} \definecolor{codepurple}{rgb}{0.58,0,0.82} \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 \author{Max Le}
 \date{\today}
@@ -32,7 +32,7 @@
 \begin{document}
 
 \maketitle
-\tableofcontents \clearpage
+\tableofcontents
 
 
 
@@ -59,9 +59,9 @@
 
 
 \section{INTRODUCTION}
-\label{sec:org28e1f46}
+\label{sec:org2cda4e7}
 \subsection{Generic Conservation Equation}
-\label{sec:orgbcd91f6}
+\label{sec:org9732ce9}
 Consider the following generic conservation equation:
 \begin{equation}
 \frac{\partial \phi}{\partial t} + \nabla \cdot (\textbf{u}\phi) + \nabla \cdot \textbf{J}_\phi = S_\phi
@@ -83,7 +83,7 @@ where the variables are defined as:
 \end{center}
 
 \subsection{Mass Conservation Equation}
-\label{sec:org89332a0}
+\label{sec:orga91215a}
 Setting \(\phi = \rho\), where \(\rho\) is the density. Also, mass conservation of a \texttt{continuous} substance does not
 have diffusive flux => \(\textbf{J}_\rho = 0\).
 \begin{equation}
@@ -102,7 +102,7 @@ have diffusive flux => \(\textbf{J}_\rho = 0\).
 \end{itemize}
 
 \subsection{Momentum Conservation Equation}
-\label{sec:org40b99a0}
+\label{sec:org380fefc}
 Setting \(\phi = \rho \textbf{u}\). Diffusive flux term \(\textbf{J}_\textbf{u} = -\nabla \cdot \sigma\), where
 \(\sigma\) is the fluid stress tensor. 
 
@@ -131,7 +131,7 @@ For incompressible Newtonian fluid, we can rewrite \(\tau\) in terms of the dyna
 \end{equation}
 
 \subsection{Energy Conservation Equation}
-\label{sec:org79d772e}
+\label{sec:org079697b}
 Setting \(\phi = \rho h\) with \(h\) being the specific enthalpy of a substance at a given state. Thus, the unit for \(\phi\) is
 energy per unit volume. The diffusive flux is given by Fourier's law: \(J = -k \nabla \textbf{T}\) with \(k\) is the thermal conductivity.
 \begin{equation}
@@ -154,7 +154,7 @@ If we assume:
 where \(\alpha = \frac{k}{\rho c_p}\) is the thermal diffusivity. 
 
 \subsection{Discretization of the Generic Conservation Equation}
-\label{sec:orgbc87fc2}
+\label{sec:orgebdc544}
 Our generic variable, \(\phi\) is a function of of spatial and time: \(\phi = \phi (\textbf{x},t)\), where
 \(\textbf{x} = (x,y,z)\). Note that spatial variable can be influenced "\textsubscript{one} way\_" or "\textsubscript{two} way\_", i.e.
 \begin{itemize}
@@ -181,7 +181,7 @@ We consider the diffusion term or \textbf{elliptic PDE} :  \(\boxed{\nabla \cdot
 Likewise, the convection term or \textbf{parabolic PDE} :  \(\boxed{\nabla \cdot (\textbf{u}\phi)}\) to be \uline{one-way in space} 
 
 \subsection{Main idea behind Discretization}
-\label{sec:org24e000a}
+\label{sec:org06eb079}
 Our goal is to:
 \begin{itemize}
 \item replace the PDEs' continuous solution with \uline{discrete} solution, at \uline{specific location} that approximates the continuous
@@ -200,7 +200,7 @@ balanced.
 \end{center}
 \end{enumerate}
 \subsection{Determine Cell Centre + Face Integration Points}
-\label{sec:org599225c}
+\label{sec:org92dc35a}
 \uline{Cell centre} => location of \uline{solution} variables.\\
 Points on \uline{face} => \uline{fluxes} are evaluated.\\
 Consider a volume integral of a quantity \(\phi\), we may express this integral in discrete form as follow:
@@ -233,7 +233,7 @@ the method is also second order.\\
 \textbf{Note}: If our \$\textbf{x}\textsubscript{P}\} does not lie at the centroid of the cell. The second term,\(\int_V (\textbf{x}-\textbf{x}_P) dV\) does not go
 to zero, making our approximation to be 1st order, which is worse. 
 \subsection{Transient term}
-\label{sec:org38871b5}
+\label{sec:org0e0156f}
 Here we deal with the transient term, \(\frac{\partial \phi}{t}\). Discretization of this term relies on:
 \begin{itemize}
 \item order of accuracy
@@ -245,7 +245,7 @@ the formula for the discretization.
 \int_{t_0}^{t_1} \int_V \frac{\partial \phi}{\partial t}dVdt \approx (\phi V_P)^{t_1} - (\phi V_P)^{t_0} 
 \end{equation}
 \subsection{Advection term}
-\label{sec:org72071e7}
+\label{sec:orgb4e5986}
 Here we deal with the advection term, \(\nabla \cdot (\textbf{u} \phi)\). Similar to the transient term, the formula for the
 discretization can be obtained by integrating over the control volume \(V_P\). We also employ Gauss' theorem to convert
 \uline{volume integral} to \uline{surface integral}:
@@ -263,7 +263,7 @@ For the surface integral, we approximate by summing up over the faces surroundin
 \item interpolating \(\phi_{ip}\) carefully to obtain \uline{stable} numerical method.
 \end{itemize}
 \subsection{Diffusion term}
-\label{sec:orge241be5}
+\label{sec:orgfd14c0d}
 Now, we deal with the diffusion term, \(\nabla \cdot \textbf{J}_\phi\). Similar to the advection term, we integrate over a control
 volume, then apply Gauss' theorem
 \begin{equation}
@@ -275,7 +275,7 @@ Again, the surface integral is approximated as discrete sum over the faces surro
 \end{equation}
 where the flux, \(\textbf{J}_{\phi,ip}\) is interpolated from neighboring cell values. 
 \subsection{Source term}
-\label{sec:orgd00090d}
+\label{sec:org3d0534f}
 Recall our source term: \(S_\phi\), we assume that the source term is \uline{piecewise continuous}, with one specific value, \(S_\phi\),
 being represented by each cell. We can then write:
 \begin{equation}
@@ -283,7 +283,7 @@ being represented by each cell. We can then write:
 \end{equation}
 Generally, the source term may depend on \(\phi\) so linearization is needed to obtain \uline{stable} numerical method. 
 \subsection{Linearization}
-\label{sec:orgbd5480b}
+\label{sec:org99c0393}
 With regard to our last point about \(J_\phi\), the discretized terms depend non linearly on the solution. This non-linearity
 is caused by:
 \begin{itemize}
@@ -335,7 +335,7 @@ a_P &= \frac{\partial r_P}{\partial \phi_P}\\
 a_{nb} &= \frac{\partial r_P}{\partial \phi_{nb}}
 \end{align}
 \subsection{Four Basic Rules}
-\label{sec:org1d3c9ab}
+\label{sec:orga45b177}
 Outlined by Patankar(1980), these 4 rules are:
 \begin{itemize}
 \item \textbf{Rule 1: Consistency at control volume faces\\
@@ -368,15 +368,15 @@ and \(\phi+c\). So in this case, make sure to modify the source term coefficient
 \end{itemize}
 \clearpage
 \section{STEADY DIFFUSION EQUATION}
-\label{sec:org59cadc2}
+\label{sec:orgc950b02}
 \subsection{Problem Definition}
-\label{sec:orgdd40e3d}
+\label{sec:orgd7b57c5}
 We consider the solution of a \uline{steady}, \uline{1D} heat diffusion equation
 \begin{equation}
 -k \nabla^2 T - S = 0
 \end{equation}
 \subsection{Discretization}
-\label{sec:org37cb87b}
+\label{sec:org5af3b82}
 Recall our diffusion term can be discretized as:
 \begin{equation}
 \int_S \textbf{J} \cdot \textbf{n} dS \approx \sum_{i=0}^{N_{ip}-1} \textbf{J}_{ip}\cdot \textbf{n}_{ip}A_{ip}
@@ -458,7 +458,7 @@ is the solution correction. At each current iteration \(i\), the solution is upd
 \textbf{T} = \textbf{T}_i + \delta \textbf{T}i
 \end{equation}
 \subsection{Source Terms}
-\label{sec:orgad0aad3}
+\label{sec:org278a3ae}
 Our source term can have many forms, depending on the type of heat source. We will assume \emph{external convection}
 and \emph{radiation exchange}:
 \begin{itemize}
@@ -485,9 +485,9 @@ where:
 \end{itemize}
 \end{itemize}
 \subsection{Discussion of Discretization Procedure}
-\label{sec:orgd0faa22}
+\label{sec:org71542e5}
 \subsubsection{Temperature Profile Assumptions}
-\label{sec:org5d8ec89}
+\label{sec:orgcafe6cf}
 When computing the diffusive fluxes through the faces, we assumed a \textbf{piecewise-linear profile} for the temperature.
 This ensures that the derivatives are defined at the integration points and provides consistency for flux
 at control-volume faces. For the source term, \textbf{piece-wise constant profile} is used, implying a single value of the source
@@ -497,7 +497,7 @@ jump discontinuity. So if fluxes will be inconsistent if piecewise-constant prof
 \includegraphics[scale=0.2]{pic/heat1D_profilePW.png}
 \end{center}
 \subsubsection{Implementation of Linearization}
-\label{sec:org6b5b508}
+\label{sec:orgca2debe}
 In Patakar's method, the solution of the linear system \textbf{is} the solution for the variables at the control volume center.\\
 In our method, the solution of the linear system is the \textbf{correction} to apply to the previous iteration of the solution. \\
 The correction method is preferred because:
@@ -506,7 +506,7 @@ The correction method is preferred because:
 \item linear system involves the residual vector. In Patankar's, there are more work to calculate the residual vector.
 \end{itemize}
 \subsubsection{Properties of the Discrete Algebraic Equations}
-\label{sec:org99ef171}
+\label{sec:orgae36018}
 Recall our algebraic equation for the linear system
 \begin{equation}
 a_P\delta T_P + a_W\delta T_W + a_E \delta T_E = -r_P 
@@ -560,19 +560,19 @@ side is consistent.
 \includegraphics[scale=0.2]{pic/heat1D_profilePARABOLIC.png}
 \end{center}
 \subsection{Implemenation: \href{1D\_heat\_diffusion\_steady.py}{Python Code}}
-\label{sec:org28d94b7}
+\label{sec:orgff8e50b}
 \lstinputlisting[language=Python]{1D_heat_diffusion_steady.py}
 \section{TRANSIENT 1D HEAT DIFFUSION}
-\label{sec:org432f7ab}
+\label{sec:org70a81c5}
 \subsection{Problem Definition}
-\label{sec:orgaa993c5}
+\label{sec:org82214ea}
 In contrast to the steady case, here we are solving the following transient 1D heat diffusion equation
 \begin{equation}
 \frac{\partial (\rho c_p T)}{\partial t} = k \nabla^2 T + S
 \end{equation}
 assuming constant \(\rho\) and \(c_p\)
 \subsection{Discretization}
-\label{sec:org6a58926}
+\label{sec:orgf03cb42}
 Integrating the governing equation through space and time yields:
 \begin{equation}
 \int_{t_0}^{t_1} \int_{V} \frac{(\partial \rho c_p T)}{\partial t} dt dV = \int_{t_0}^{t_1} \int_{V} k \nabla^2 T dt dV + \int_{t_0}^{t_1} \int_{V} S dt dV
@@ -616,7 +616,7 @@ Assuming no source term, \(S = 0\), constant properties and divide by \(\Delta t
 \item Implicit requires solution of a linear system at current time step. The same is true for Crank-Nicolson, or any scheme where \(0<\omega < 1\)
 \end{itemize}
 \subsection{Analysis of Explicit Scheme}
-\label{sec:orge6d12db}
+\label{sec:org2ca5864}
 Recall explicit scheme means \(\omega = 0\). Our discretized equation becomes:
 \begin{equation}
 \rho c_p \frac{T_P ^{t+\Delta t}}{\Delta t} V_P = [F_w^d-F_e^d]^t + \rho c_p \frac{T_P^t}{\Delta t}V_P 
@@ -655,7 +655,7 @@ For uniform grid, \(A_e =
 Note how our timestep is related to the square of the grid size, so the a fine grid will have a very small "\(\Delta x^2\)".
 To study this, we consider an iron bar with \(\alpha = 23.1 \times 10^{-6}\) [\(m^2/s\)] at various grid sizes:
 \begin{table}[htbp]
-\label{tab:org66b5645}
+\label{tab:orgfcfb98b}
 \centering
 \begin{tabular}{rr}
 \hline
@@ -675,7 +675,7 @@ We can quickly see how the timestep restriction gets worse with increasing grid 
 in practice. Exception would be calculation of turbulent flow using direct numerical simulation (DNS). In this case, explicit method are a good choice
 because they are less expensive per timestep, since no linear system must be solved. 
 \subsection{Analysis of Fully Implicit Scheme}
-\label{sec:orgd76ee49}
+\label{sec:orgb77dc6e}
 Setting \(\omega = 1\) for implicit scheme. Our discretized equation becomes:
 \begin{equation}
 \rho c_p \frac{T_P ^{t+\Delta t}-T_P^t}{\Delta t} V_P = [-D_w(T_P-T_W) + D_e(T_E-T_P)]^{t+\Delta t} 
@@ -688,9 +688,9 @@ We can see that none of the coefficients can be come negative when written out t
 all transient phenomena. In contrast to this fully implicit scheme, the \uline{Crank-Nicholson scheme} has no formal restriction on \(\Delta t\), but still
 produces \textbf{oscillatory} at large \(\Delta t\). 
 \subsection{Derivation of Second Order Implicit Scheme}
-\label{sec:org90a297f}
+\label{sec:org240720a}
 \subsubsection{General idea}
-\label{sec:org5f1b229}
+\label{sec:orge86ddff}
 We consider integration over a special \textbf{space-time control volume}, with:
 \begin{itemize}
 \item the time faces being located at \(t-\Delta t/2, t+ \Delta t/2\)
@@ -711,7 +711,7 @@ By using the space-time control volume, the RHS of the discretized equation eval
 \end{itemize}
 \end{itemize}
 \subsubsection{Derivation}
-\label{sec:orgd6c8929}
+\label{sec:org284e255}
 Integrate the governing equation over the space-time control volume 
 \begin{equation}
 \int_{t-\Delta t/2}^{t+\Delta t/2} \int_{V} \frac{(\partial \rho c_p T)}{\partial t} dt dV =
@@ -775,7 +775,7 @@ Instead, only temperature values at the \textbf{previous two time step} need to 
 \end{itemize}
 \end{itemize}
 \subsubsection{Other Transient Discretization Schemes}
-\label{sec:orge71c202}
+\label{sec:org8edca2a}
 Some higher order schemes are also used such as:
 \begin{itemize}
 \item Adams-Bashforth (explicit)
@@ -783,7 +783,7 @@ Some higher order schemes are also used such as:
 \item Runge-Kutta (implicit or explicit)
 \end{itemize}
 \subsubsection{Linearization}
-\label{sec:org24e59a1}
+\label{sec:org8096559}
 Recall the cell residual for steady conduction:
 \begin{equation*}
 r_P = D_w (T_P - T_W) - D_e (T_E - T_P) - S_PV_P
@@ -808,13 +808,13 @@ If we apply 2nd order implicit temporal scheme instead, then \(a_P\) term would 
 a_P = \frac{\partial r_P}{\partial T_P} = \frac{3}{2}\frac{\rho c_p V_P}{\Delta t} + D_w + D_e - \frac{\partial S_P}{\partial T_P}V_P
 \end{equation*}
 \subsection{Implementation: \href{1d\_heat\_diffusion\_transient.py}{Python code}}
-\label{sec:org0f77606}
+\label{sec:org67beb8b}
 \lstinputlisting[language=Python]{1d_heat_diffusion_transient.py}
 \clearpage
 \section{ONE-DIMENSIONAL CONVECTION OF A SCALAR}
-\label{sec:org100f421}
+\label{sec:org4b7a797}
 \subsection{Problem Definition}
-\label{sec:orgc94bf9b}
+\label{sec:org5696609}
 For thermal convection, we need the advection-diffusion equation. So far, we only dealt with diffusion, now we add
 the advection term which results in:
 \begin{equation}
@@ -827,7 +827,7 @@ define a mass conservation equation without mass source.
 \frac{\partial \rho}{\partial t} + \nabla \cdot (\rho \textbf{u}) = 0
 \end{equation}
 \subsection{Discretization}
-\label{sec:org484f826}
+\label{sec:org6236e9e}
 Just like we did before, we now integrate the advection-diffusion equation through space and time:
 \begin{equation}
 \int_{t_0}^{t_1} \int_V \frac{\partial (\rho c_p T)}{\partial t}dtdV + \int_{t_0}^{t_1} \int_V \nabla \cdot (\rho c_p \textbf{u}T)dtdV
@@ -889,7 +889,7 @@ the equations are again independent of the temperature level.
 \end{itemize}
 
 \subsection{Advection term with Explicit Time Integration}
-\label{sec:org6b88174}
+\label{sec:orga094ac0}
 Assume we can interpolate the integration point values in the advection term using a piecewise linear approximation:
 \begin{align*}
 T_e &= \frac{1}{2}(T_P+T_E)\\
@@ -905,4 +905,321 @@ mass conservation from the energy equation as implicit (i.e. at current timestep
 \end{equation*}
 where \('o'\) denotes values at previous timestep, and those without superscripts are for current timestep (i.e. those being solved).
 We can then group the terms according to their temperature:
+\begin{equation*}
+\begin{aligned}
+\left(  \frac{\rho c_p V_P}{\Delta t} + c_p \dot{m}_w - c_p \dot{m}_e \right  )T_P
+&= \left( \frac{\rho c_p V_P}{\Delta t} + \frac{c_p \dot{m}_w}{2} - \frac{c_p \dot{m}_e}{2} -D_e -D_w \right) T_p^o\\
+&+\left(D_e - \frac{c_p \dot{m}_e}{2}  \right)T_E^o  +\left(D_w - \frac{c_p \dot{m}_w}{2}  \right)T_W^o
+\end{aligned}
+\end{equation*}
+If mass is conserved, i.e. \(\dot{m}_e = \dot{m}_w\), then:
+\begin{equation*}
+\begin{aligned}
+\frac{\rho c_p V_P}{\Delta t}T_P - &\left( \frac{\rho c_p V_P}{\Delta t} -D_e -D_w \right) T_p^o - \left(D_e - \frac{c_p \dot{m}_e}{2}  \right)T_E^o\\
+&+\left(D_w - \frac{c_p \dot{m}_w}{2}  \right)T_W^o = 0
+\end{aligned}
+\end{equation*}
+From Rule 2, we need :
+\begin{itemize}
+\item the coefficient on \(T_P\) to be \uline{positive\_}
+\item the coefficients on remaining terms, \(T_P^o\), \(T_E^o\), and \(T_W^o\) to be \uline{negative}.
+\end{itemize}
+For \(T_P^o\), this requires:
+\begin{equation*}
+D_e + D_w \leq \frac{\rho c_p V_P}{\Delta t}
+\end{equation*}
+or:
+\begin{equation*}
+\Delta t \leq \frac{\rho c_p V_P}{D_e + D_w}
+\end{equation*}
+Refer to chapter 3, we see that this is the same timestep restriction in the form:
+\begin{equation*}
+\boxed{\frac{\alpha \Delta t}{\Delta x^2} \leq \frac{1}{2}}
+\end{equation*}
+where \(\alpha = \frac{k}{\rho c_p}\). We can say that the addition of the advection term does not change the timestep restriction.
+Note how the coefficients for \(T_P^o\) and \(T_E^o\) \textbf{can be positive} for certain mass flow rates. Thus, for \(T_E^o\), we need the following
+condition:
+\begin{equation*}
+D_e \geq \frac{c_p \dot{m}_e}{2}
+\end{equation*}
+simplifying\ldots{}
+\begin{equation*}
+\begin{aligned}
+D_e & \geq \frac{c_p \dot{m}_e}{2}\\
+\frac{kA}{\Delta x} & \geq \frac{c_p \rho u A}{2}\\
+\Delta x &\leq \frac{2k}{\rho c_p u}
+\end{aligned}
+\end{equation*}
+or in terms of the thermal diffusivity, \(\alpha\):
+\begin{equation*}
+\boxed{\frac{u \Delta x}{\alpha} < 2 }
+\end{equation*}
+To sum up, we have both the spatial and temporal conditions on \(\Delta x\) and \(\Delta t\). Multiplying them together:
+\begin{equation*}
+\begin{aligned}
+\frac{\alpha \Delta t}{\Delta x^2}\cdot \frac{u \Delta x}{\alpha} &< \frac{1}{2}\cdot 2\\
+\frac{u \Delta t}{\Delta x} &< 1
+\end{aligned}
+\end{equation*}
+The LHS is known as the Courant number, thus the space-time restriction can be written as:
+\begin{equation}
+\boxed{Co < 1}
+\end{equation}
+To see whether such restriction is serious. \\
+Consider flow in a tube with constant wall temperature, \(T_w\), this problem has the exact solution as:
+\begin{equation*}
+\frac{T_w - T(x)}{T_w=T_{in}} = exp\left(-\frac{hP}{\dot{m}c_p}x \right)
+\end{equation*}
+\begin{center}
+\includegraphics[scale=0.5]{pic/tube_twall.png}
+\end{center}
+Let us consider the solution for this problem unil some point \(x_L\) where the bulk temperature difference, \((T_w - T(x))\)
+reached \(5\%\) the difference in inlet and wall, \((T_w-T_{in})\), i.e.
+\begin{equation*}
+\frac{T_w-T(x_L)}{T_w-T_{in}} = 0.05
+\end{equation*}
+We further assume the Nusselt number is defined as:
+\begin{equation*}
+Nu = \frac{hD}{k}
+\end{equation*}
+Then the general solution for this particular geomtry is as follow:
+\begin{equation*}
+\frac{T_w - T(x)}{T_w=T_{in}} = exp\left(  -\frac{   \frac{Nuk}{D} \pi D } {\rho u \pi \frac{D^2}{4}  c_p} x_L \right) = exp\left(- \frac{4Nu\alpha}{uD^2}x_L   \right)
+\end{equation*}
+By definition, \(uD/\alpha = RePr\), \(R_e = uD/\nu\) and \(Pr = \nu/\alpha\):
+\begin{equation*}
+\frac{T_w - T(x)}{T_w=T_{in}} = exp\left(- \frac{4Nu}{RePr}\frac{x_L}{D}   \right)
+\end{equation*}
+Recall we want \(5\%\) between the temperature difference
+\begin{equation*}
+\begin{aligned}
+\frac{4Nu}{RePr}\frac{x_L}{D} &= 3\\
+\frac{x_L}{D} &= \frac{3}{4}\frac{RePr}{Nu}
+\end{aligned}
+\end{equation*}
+Now, we use the restriction from above, \(\Delta x \leq 2\alpha / u\) and the definition of the number of control volume, \(N_{cv} = x_L/\Delta x\):
+\begin{equation*}
+\boxed{N_{cv} \leq \frac{x_L}{\Delta x} = \frac{3}{8}\frac{Re^2Pr^2}{Nu}}
+\end{equation*}
+Using some numbers to test:
+\begin{center}
+\begin{tabular}{ll}
+\textbf{PARAMETERS} & \textbf{NO. OF CONTROL VOLUME}\\
+\hline
+ & \\
+Nu = 5, Re = 1000, Pr = 1 & \(10^5\) = 100,000\\
+Nu = 5, Re = 1000, Pr = 10 & \(10^7\) = 10,000,000\\
+\end{tabular}
+\end{center}
+\uline{Note}: a 10 times increase in Pr results in \(10^7\) number of control volume. This is impractical because it means that we need to solve
+\(10^7\) equations. So what is the required minimum number of timestep? We can calculate this by taking the ratio between \uline{the time it take for a fluid
+to exit the pipe} to the \uline{time step restriction we derived above}:
+\begin{equation*}
+\begin{aligned}
+N_t &= \frac{x_L/u}{\Delta t}\\
+&= \frac{\frac{3}{4}\frac{RePr}{Nu}\frac{D}{u}}{\frac{1}{2}\frac{\Delta x^2}{\alpha}}\\
+&= \frac{3}{8}\frac{Re^2Pr^2}{Nu}
+\end{aligned}
+\end{equation*}
+Again, using some numbers, we face similar problem: too impractical. 
+\begin{center}
+\begin{tabular}{ll}
+\textbf{PARAMETERS} & \textbf{NO. OF CONTROL VOLUME}\\
+\hline
+ & \\
+Nu = 5, Re = 1000, Pr = 1 & \(10^5\) = 100,000\\
+Nu = 5, Re = 1000, Pr = 10 & \(10^7\) = 10,000,000\\
+\end{tabular}
+\end{center}
+Next, we will discuss in more details about these restrictions. 
+
+\subsection{Discussion of the Restrictions on Timestep}
+\label{sec:orgf1ba113}
+We see how explicit scheme results in timestep restriction.
+Next, let's consider a 1st order implicit scheme:
+\begin{equation*}
+\begin{aligned}
+&\left(  \frac{\rho c_p V_P}{\Delta t} + D_e + D_w + c_p \dot{m}_w - c_p \dot{m}_e \right  )T_P
+- \left( D_e - \frac{c_p \dot{m}_e}{2} \right) T_E\\
+&-\left(D_w + \frac{c_p \dot{m}_e}{2}  \right)T_W  - \frac{\rho c_p V_p}{\Delta t}T_P^o = 0
+\end{aligned}
+\end{equation*}
+Rule 2 requires coefficient on \(T_p\) to be \uline{positive}. From above equation, there is no time restriction because coefficient on \(T_p\) is always positive, assuming mass is conserved.\\
+On the other hand, \(T_W\) and \(T_E\) ' coefficients need to be \uline{negative}:
+\begin{equation*}
+\begin{aligned}
+D_e - \frac{c_p \dot{m}_e}{2} &\leq 0\\
+\frac{u \Delta x}{\alpha} &\leq 2
+\end{aligned}
+\end{equation*}
+Previous analysis still applies so the number of control volume is still large (even if there is no restriction on the timestep size)
+
+\subsection{Discussion of the Restriction on Spatial Resolution}
+\label{sec:orgeb68f10}
+By moving to an implicit time integration scheme, we encountered restriction on time step. \\
+Follow the same logic, we can also say that the restriction on grid size must come from the interpolation method chosen
+for the integration point in the advection term.\\
+Again, we consider flow in a duct where analytical solution is known and can be applied between \(P\) and \(E\) locations.
+Our temperature profile between cell centers is:
+\begin{equation*}
+\frac{T-T_P}{T_E-T_P} = \frac{\textrm{exp}\left[Pe_\Delta \left(\frac{x-x_P}{x-x_P}  \right)       \right] -1 }
+{\textrm{exp}(Pe_\Delta)-1}
+\end{equation*}
+where \(Pe_\Delta\) is the Pectet number representing ratio of convection to diffusion
+\begin{equation*}
+\begin{aligned}
+Pe_\Delta &= \frac{u \Delta x}{\alpha}\\
+&=  \frac{u \Delta x}{\alpha} \cdot \frac{\mu / \rho}{\mu / \rho}\\
+&= \frac{(\mu / \rho) u \Delta x}{(\mu / \rho)\alpha}\\
+&= \frac{\nu}{\alpha}\left(\frac{u \Delta x}{\mu / \rho}\right)\\
+&= \frac{\nu}{\alpha}\left(\frac{ \rho u \Delta x}{\mu}\right)\\
+&= Re_\Delta Pr
+\end{aligned}
+\end{equation*}
+with the following flow regimes:
+\begin{itemize}
+\item \(Pe_\Delta \approx 0\): diffusion dominates
+\item \(|Pe_\Delta| \approx 1\): convection and diffusion
+\item \(|Pe_\Delta| \gg 1\): convection dominates
+\end{itemize}
+Visualization for different values of \(Pe_\Delta\): \href{pectet\_visualize\_pipe.py}{Python code}
+\lstinputlisting[language=Python]{pectet_visualize_pipe.py}
+
+\begin{center}
+\includegraphics[scale=0.8]{pic/pectet_visual_pipe.png}
+\end{center}
+We note from the figure above that our assumption piecewise linear temperature profile, using
+the \uline{central difference scheme (CDS)}, is only valid for \(Pe_\Delta \approx 0\). \\
+In practice, \(Pe_\Delta\) will be large and thus we need different interpolation scheme. 
+
+\subsection{The Upwind Difference Scheme (UDS)}
+\label{sec:orgf16f20f}
+We attempt a new interpolation scheme, upwind difference scheme. For the east integration point, we have:
+\begin{equation}
+T_e = \frac{1+\alpha _e}{2} T_P + \frac{1-\alpha_e}{2}T_E
+\end{equation}
+with \(\alpha\) being the weighting factor, i.e.
+\begin{itemize}
+\item \(Pe_\Delta \approx 0\) , \(\alpha_e = 0\) : diffusion dominates, CDS recovered
+\item \(|Pe_\Delta| \approx 1\), \(\alpha_e = 1\) : convection and diffusion, \(T_e = T_P\)
+\item \(|Pe_\Delta| \gg 1\), \(\alpha_e = -1\): convection dominates, \(T_e = T_E\)
+\end{itemize}
+Using this new interpolation scheme, the discrete equation in terms of the cell residual becomes:
+\begin{equation*}
+\begin{aligned}
+r_P &= \left(\frac{\rho c_p v_P}{\Delta t}+D_e + D_w + \frac{1}{2}c_p\dot{m}_w(1+\alpha_w) - \frac{1}{2}c_p\dot{m}_e(1-\alpha_e) \right)T_P\\
+-&\left[D_e -\frac{1}{2}c_p\dot{m}_e(1-\alpha_e)\right]T_E - \left[D_w +\frac{1}{2}c_p\dot{m}_w(1+\alpha_w)\right]T_W
+- \frac{\rho c_p V_P}{\Delta t} T_P^o
+\end{aligned}
+\end{equation*}
+with the following linearization coefficients:
+\begin{equation}
+\begin{aligned}
+a_W &= -D_w - \frac{1}{2}c_p \dot{m}w(1+\alpha_w)\\
+a_E &= -D_e + \frac{1}{2}c_p \dot{m}_e(1-\alpha_e)\\
+a_P &= \frac{\rho c_p v_P}{\Delta t} - a_W - a_E
+\end{aligned}
+\end{equation}
+For fast flowing fluid in the positive direction, \(\alpha_w = \alpha_e = 1\). Our east/west coefficients become:
+\begin{equation*}
+\begin{aligned}
+a_W &= -D_e - c_p \dot{m}w\\
+a_E &= D_e
+\end{aligned}
+\end{equation*}
+To satisfy Rule 2, here the coefficients cannot become positive, because the fluid is flowing in the positive direction
+and \(\dot{m}_w\) is positive. In contrast, for a fluid flowing in the negative direction, \$\(\alpha\)\textsubscript{w} = \(\alpha\)\textsubscript{e} = -1 \$ and
+the coefficients become:
+\begin{equation*}
+\begin{aligned}
+a_W &= -D_w\\
+a_E &= -D_e + c_p \dot{m}e
+\end{aligned}
+\end{equation*}
+Again, these cannot be positive because \(\dot{m}_e\) is negative in this case. As a result, we can see that using Upwind Difference
+Scheme ensures the solution is stable for any \(\Delta x\). Combining this with an implicit time integration scheme means that
+there are no formal restrictions on timestep or grid size. 
+
+\subsection{False Diffusion}
+\label{sec:org1c3a1f7}
+UDS is only 1st order and only when \(\alpha_e = \pm 1\). Here, we try to estimate the accuracy of UDS against CDS
+using Taylor series about east face integration point.
+\begin{center}
+\includegraphics[scale=0.5]{pic/false_diffusion.png}
+\end{center}
+Expanding about this point gives the following cell values:
+\begin{equation*}
+\begin{aligned}
+T_E &= T_e + \frac{\Delta}{2}{dT}{dx}\biggr \rvert_e + \frac{(\Delta / 2)^2}{2}\frac{d^2T}{dx^2}\biggr \rvert_e + ... \\
+T_P &= T_e - \frac{\Delta}{2}{dT}{dx}\biggr \rvert_e + \frac{(\Delta / 2)^2}{2}\frac{d^2T}{dx^2}\biggr \rvert_e - ... 
+\end{aligned}
+\end{equation*}
+Recall the CDS interpolation, \(T_e = 1/2(T_P + T_E)\). We sub this into the above estimates:
+\begin{equation*}
+T_e^{CDS} = T_e + \frac{(\Delta / 2)^2}{2}\frac{d^2 T}{dx^2}\biggr \rvert _e + O(\Delta ^4)
+\end{equation*}
+Likewise, for UDS, we assume flow in the positive direction:
+\begin{equation}
+T_e^{UDS} = T_P = T_e - \frac{\Delta}{2}\frac{dT}{dx}\biggr \rvert _e + O(\Delta ^2)
+\end{equation}
+The error is based on the first truncated term. For both cases (UDS and CDS), the leading term is \(T_e\) and the next term
+is the truncated term.
+\begin{equation*}
+\begin{aligned}
+e^{CDS} &\sim \dot{m}c_p \frac{(\Delta / 2)^2}{2}\frac{d^2T}{dx^2} \biggr \rvert_e \sim O(\Delta ^2)\\
+e^{UDS} &\sim \dot{m}c_p \frac{\Delta}{2}\frac{dT}{dx}\biggr \rvert _e \sim O(\Delta)
+\end{aligned}
+\end{equation*}
+Note how we have the \(\dot{m}c_p\) term, this is because the integration point temperatures are multiplied by this value in
+the energy equation. Thus, this is the full error for that term, not just the error for the interpolated values. We can conclude
+that CDS is 2nd order accurate in space, while UDS is only 1st order in space. Another way to think is: if we half the grid size,
+the UDS error will reduce by factor of 2, while the CDS will reduce by factor of 4.\\
+Note also that the error for UDS is proportional to the temperature gradient in the energy equation, this behaves very much like
+a diffusion term: \(k\frac{dT}{dx}\). We call this `false diffusion'.
+\begin{equation*}
+e^{UDS} = -\dot{m}c_p \frac{\Delta}{2}\frac{dT}{dx}\biggr \rvert_e = -\frac{\rho c_p u_e A_e \Delta}{2}\frac{dT}{dx}\biggr\rvert_e
+= -\Gamma^{false}\frac{dT}{dx}\biggr\rvert_e A_e
+\end{equation*}
+with \(\Gamma^{false} = \frac{\rho c_p u_e \Delta}{2}\). Obviously, our real diffusion involves \(k\) and \(\nabla T\). Taking the ratio
+between these:
+\begin{equation*}
+\begin{aligned}
+\frac{\Gamma^{false}}{\Gamma^{real}} = \frac{\rho c_p u_e \Delta}{2k} = \frac{1}{2}\frac{u\Delta}{\nu}\frac{\nu \rho c_p }{k}
+= \frac{1}{2}\frac{u\Delta}{\nu}\frac{\nu}{\alpha} = \frac{1}{2}Re_\Delta Pr = \frac{1}{2}Pe_\Delta
+\end{aligned}
+\end{equation*}
+\uline{Note}: for large \(Pe\), false diffusion dominates real diffusion. This is bad because we can't model real diffusion. However,
+note that in our analysis, we assume that the \texttt{leading term} is a good estimation of the error. For convection problem, this may
+not be the case. To test this, let us consider the exact solution between points \(P\) and \(E\):
+\begin{equation*}
+\frac{T-T_p}{T_E-T_P} = \frac{\textrm{exp}(Pe (x^*))-1}{\textrm{exp}(Pe)-1}
+\end{equation*}
+where:
+\begin{equation*}
+\begin{aligned}
+Pe &= Pe_\Delta\\
+x^* &= \left( \frac{x-x_P}{x_E-x_P} \right)
+\end{aligned}
+\end{equation*}
+or we can think of it like this:
+\begin{equation*}
+T-T_p =(T_E-T_P) \frac{\textrm{exp}(Pe (x^*))-1}{\textrm{exp}(Pe)-1} = A[\textrm{exp}(Pe (x^*))-1]
+\end{equation*}
+Recall the Taylor series expansion for \(T_P\) up to 4 terms is:
+\begin{equation*}
+T_P = T_e - \frac{\Delta}{2}\frac{dT}{dx}\biggr \rvert_e + \frac{(\Delta / 2)^2}{2}\frac{d^2T}{dx^2}\biggr \rvert_e -
+\frac{(\Delta / 2)^3}{6}\frac{d^3T}{dx^3}\biggr \rvert_e 
+\end{equation*}
+The first derivative term in the Taylor series, for this particular solution is:
+\begin{equation*}
+\begin{aligned}
+\frac{dT}{dx}\biggr\rvert_e &= \frac{dT}{dx^*}\biggr\rvert_e \frac{dx^*}{dx}\\
+\frac{dx^*}{dx} &= \frac{1}{x_E-x_P} = \frac{1}{\Delta}\\
+\frac{dT}{dx^*}\biggr \rvert_e &= APe\textrm{ exp}(Pe (x&*)) = APe\textrm{ exp}\left(\frac{Pe}{2}\right)
+\end{aligned}
+\end{equation*}
+Following the same procedure, we can find out expressions for the 2nd and 3rd derivatives. Plugging into the Taylor series for T\(T_P\):
+\begin{equation*}
+T_P = ... = T_e - \frac{APe \textrm{ exp} \left(\frac{Pe}{2}\right)} {2} \left[1 - \frac{Pe}{4} + \frac{Pe}{24} \right]
+\end{equation*}
 \end{document}

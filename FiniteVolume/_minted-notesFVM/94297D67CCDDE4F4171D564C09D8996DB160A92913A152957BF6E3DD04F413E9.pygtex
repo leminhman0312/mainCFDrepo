@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k}{as} \PYG{n+nn}{plt}
+
+\PYG{n}{gridsize} \PYG{o}{=} \PYG{p}{[}\PYG{n}{a}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{k}{for} \PYG{n}{a} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{]}
+\PYG{n}{timestep} \PYG{o}{=} \PYG{p}{[}\PYG{n}{a}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{k}{for} \PYG{n}{a} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{]}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{xlabel}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}GRID SIZE\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{ylabel}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}TIME STEP\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{gridsize}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:],}\PYG{n}{timestep}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:])}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{yscale}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}log\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{savefig}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}pic/explicit\PYGZus{}timestep.png\PYGZdq{}}\PYG{p}{)}
+\end{Verbatim}
