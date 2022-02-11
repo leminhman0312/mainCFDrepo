@@ -1,4 +1,3 @@
-# Solving the 1D Diffusion Equation-TRANSIENT
 import numpy as np
 from enum import Enum
 from scipy.sparse.linalg import spsolve
@@ -6,7 +5,6 @@ from scipy.sparse import csr_matrix
 from numpy.linalg import norm
 import sys
 import matplotlib.pyplot as plt
-
 
 # class Grid: defining a 1D cartesian grid
 class Grid:
@@ -28,7 +26,7 @@ class Grid:
         self._xf = np.array([i*dx for i in range(ncv+1)])
 
         # calculate the cell centroid locations
-        # Note: figure out why add a xf[-1] last item
+        # Note: figure out why add a xf[-1] last item 
         self._xP = np.array([self._xf[0]] +
                              [0.5*(self._xf[i]+self._xf[i+1]) for i in range(ncv)] +
                              [self._xf[-1]])
@@ -206,11 +204,9 @@ class NeumannBC:
     def value(self):
         # return the boundary condition value
         if self._loc is BoundaryLocation.WEST:
-            return self._phi[1]-self._gradient*self._grid.dx_WP[0] \
-                # T(0) = T(1) - gb*dx
+            return self._phi[1]-self._gradient*self._grid.dx_WP[0] # T(0) = T(1) - gb*dx
         elif self._loc is BoundaryLocation.EAST:
-            return self._phi[-2]-self._gradient*self._grid.dx_PE[-1] \
-                #T(-1) = T(-2) -gb*dx
+            return self._phi[-2]-self._gradient*self._grid.dx_PE[-1] #T(-1) = T(-2) -gb*dx
         else:
             raise ValueError("Unknown boundary location")
 
@@ -227,51 +223,6 @@ class NeumannBC:
             self._phi[-1] = self._phi[-2] + self._gradient*self._grid.dx_PE[-1]
         else:
             raise ValueError("Unknown boundary location")
-
-class RobinBC:
-    def __init__(self,phi,grid,h,k,tinfty, loc):
-        # # constructor
-        # phi = field variable array
-        # grid = grid
-        # h = convective coefficient
-        # k = conductive coefficient
-        # tinfty = freestream temperature
-        # loc = boundary location
-
-        self._phi = phi
-        self._grid = grid
-        self._h = h
-        self._k = k
-        self._tinfty = tinfty
-        self._loc = loc
-
-    def value(self):
-        # return the boundary condition value
-        if self._loc is BoundaryLocation.WEST:
-            return (self._phi[1] + self._grid.dx_WP[0]*(self._h/self._k)*(self._tinfty))\
-                /(1 + self._grid.dx_WP[0]*(self._h/self._k))
-        elif self._loc is BoundaryLocation.EAST:
-            return (self._phi[-2] - self._grid.dx_PE[-1]*(self._h/self._k)*(self._tinfty))\
-                /(1 - self._grid.dx_PE[-1]*(self._h/self._k))
-        else:
-            raise ValueError("Unknown boundary location")
-
-
-    def coeff(self):
-        # return the linearization coefficient
-        return 1
-
-    def apply(self):
-        # applies the boundary condition in the referenced field variable array
-        if self._loc is BoundaryLocation.WEST:
-            self._phi[0]  =  (self._phi[1] + self._grid.dx_WP[0]*(self._h/self._k)*(self._tinfty))\
-                /(1 + self._grid.dx_WP[0]*(self._h/self._k))
-        elif self._loc is BoundaryLocation.EAST:
-            self._phi[-1] = (self._phi[-2] - self._grid.dx_PE[-1]*(self._h/self._k)*(self._tinfty))\
-                /(1 - self._grid.dx_PE[-1]*(self._h/self._k))
-        else:
-            raise ValueError("Unknown boundary location")
-
 
 
 # class DiffusionModel defining a defusion model
@@ -296,9 +247,9 @@ class DiffusionModel:
             /self._grid.dx_PE # Fe = k*(Te-Tp)*Ae/dx_PE
 
         # calculate the linearized coefficient [aW, aP, aE]
-        coeffW = -self._gamma*self._grid.Aw/self._grid.dx_WP # Dw
-        coeffE = -self._gamma*self._grid.Ae/self._grid.dx_PE # De
-        coeffP = -coeffW - coeffE                            # Dw + De in notes, but due to minus sign so -Dw-De in code
+        coeffW = -self._gamma*self._grid.Aw/self._grid.dx_WP
+        coeffE = -self._gamma*self._grid.Ae/self._grid.dx_PE
+        coeffP = -coeffW - coeffE # should be +?
 
         # modified the linearized coefficient on the boundaries
         coeffP[0] += coeffW[0]*self._west_bc.coeff()
@@ -320,6 +271,54 @@ class DiffusionModel:
         # return the coefficient arrays
         return coeffs
 
+
+# class defining a surface convection model
+class SurfaceConvectionModel:
+    # constructor
+    def __init__(self,grid,T,ho,To):
+        self._grid = grid
+        self._T = T
+        self._ho = ho
+        self._To = To
+
+    # add surface convection terms to coefficient arrays
+    def add(self,coeffs):
+        # calculate the source term
+        source = self._ho * self._grid.Ao*(self._T[1:-1]-self._To)
+
+        # calculat linearization coefficients
+        coeffP = self._ho * self._grid.Ao
+
+        # add to coefficient arrays
+        coeffs.accumulate_aP(coeffP)
+        coeffs.accumulate_rP(source)
+
+        return coeffs
+
+# defining a first order implicit transient model
+class FirstOrderTransientModel:
+    # constructor
+    def __init__(self,grid,T,Told,rho,cp,dt):
+        self._grid = grid
+        self._T = T
+        self._Told = Told
+        self._rho = rho
+        self._cp = cp
+        self._dt = dt
+
+    def add(self,coeffs):
+        # calculate the transient term
+        # rp  = rho cp Vp (TP - TPold)/ dt
+        transient = self._rho*self._cp*self._grid.vol*(self._T[1:-1]-self._Told[1:-1])/self._dt
+        
+        # calculate the linearization coefficients
+        coeff = self._rho*self._cp*self._grid.vol/self._dt # ap = rho*cp*vp/dt
+
+        # add to coefficient arrays
+        coeffs.accumulate_aP(coeff)
+        coeffs.accumulate_rP(transient)
+
+        return coeffs
 
 # function to return a sparse matrix representation of a set of scalar coefficients
 def get_sparse_matrix(coeffs):
@@ -357,7 +356,7 @@ def get_sparse_matrix(coeffs):
         cols[3*ncv-3] = ncv-1
 
     return csr_matrix((data, (rows,cols)))
-                     
+
 # solve the linear system and return the field variables
 def solve(coeffs):
     # get the sparse matrix
@@ -365,142 +364,158 @@ def solve(coeffs):
     # solve the linear system
     return spsolve(A, -coeffs.rP)
     
-# defining a first order implicit transient model
-class FirstOrderTransientModel:
+# class defining an upwind advection model
+class UpwindAdvectionModel:
+
     # constructor
-    def __init__(self,grid,T,Told,rho,cp,dt):
+    def __init__(self,grid,phi,Uhe, rho, cp, west_bc, east_bc):
         self._grid = grid
-        self._T = T
-        self._Told = Told
+        self._phi = phi
+        self._Uhe = Uhe
         self._rho = rho
         self._cp = cp
-        self._dt = dt
+        self._west_bc = west_bc
+        self._east_bc = east_bc
+        self._alphae = np.zeros(self._grid.ncv+1)
+        self.phie = np.zeros(self._grid.ncv+1)
 
+
+    # add diffusion terms to coefficient arrays
     def add(self,coeffs):
-        # calculate the transient term
-        # rp  = rho cp Vp (TP - TPold)/ dt
-        transient = self._rho*self._cp*self._grid.vol*(self._T[1:-1]-self._Told[1:-1])/self._dt
+
+        # calculate the weighting factor
+        for i in range(self._grid.ncv+1):
+            if self._Uhe[i] >= 0:
+                self._alphae[i] = 1
+            else:
+                self._alphae[i] = -1
+
+        # calculate the east integration point (including both boundaries)
+        self._phie= (1 + self._alphae)/2*self._phi[0:-1] + (1 - self._alphae)/2*self._phi[1:]
+
+        # calculate the face mass fluxes
+        mdote = self._rho*self._Uhe*self._grid.Af
+
+        # calculate west/east advection flux
+        flux_w = self._cp*mdote[:-1]*self._phie[:-1]
+        flux_e = self._cp*mdote[1:]*self._phie[:-1]
+
+        # calculate mass imbalance
+        imbalance = -self._cp*mdote[1:]*self._phi[1:-1] + self._cp*mdote[:-1]*self._phi[1:-1]
+
+        # calculate linearization coefficients
+        coeffW = -self._cp*mdote[:-1]*(1 + self._alphae[:-1])/2
+        coeffE = self._cp*mdote[1:]*(1 + self._alphae[1:])/2
+        coeffP = -coeffW - coeffE
+
+        # modify linearization coefficients on the boundaries
+        coeffP[0] += coeffW[0] * self._west_bc.coeff()
+        coeffP[-1] += coeffE[-1] * self._east_bc.coeff()
+
+        # zero the bc that are not used
+        coeffW[0] = 0.0
+        coeffE[-1] = 0.0
+
+        # calculate the net flux from each cell
+        flux = flux_e -flux_w
         
-        # calculate the linearization coefficients
-        coeff = self._rho*self._cp*self._grid.vol/self._dt # ap = rho*cp*vp/dt
 
         # add to coefficient arrays
-        coeffs.accumulate_aP(coeff)
-        coeffs.accumulate_rP(transient)
+        coeffs.accumulate_aE(coeffP)
+        coeffs.accumulate_aW(coeffW)
+        coeffs.accumulate_aE(coeffE)
+        coeffs.accumulate_rP(flux)
+        coeffs.accumulate_rP(imbalance)
 
+        # return modified coeff arrays
         return coeffs
 
-# class defining a surface convection model
-class SurfaceConvectionModel:
-    # constructor
-    def __init__(self,grid,T,ho,To):
-        self._grid = grid
-        self._T = T
-        self._ho = ho
-        self._To = To
-
-    # add surface convection terms to coefficient arrays
-    def add(self,coeffs):
-        # calculate the source term q = hA(T-Tinfty)
-        source = self._ho * self._grid.Ao*(self._T[1:-1]-self._To)
-
-        # calculat linearization coefficients
-        coeffP = self._ho * self._grid.Ao
-
-        # add to coefficient arrays
-        coeffs.accumulate_aP(coeffP)
-        coeffs.accumulate_rP(source)
-
-        return coeffs
-
-
-
-
-# Solving the 1D steady conduction with Dirichet BC
-# Initially, east = 300K, west = 300K
-# define the grid
+            
+# Define the grid
 lx = 1.0
 ly = 0.1
 lz = 0.1
-ncv = 10
-mygrid = Grid(lx,ly,lz,ncv)
+ncv = 50
+grid = Grid(lx,ly,lz,ncv)
 
-# set the timestep information
-nTime = 10
-dt = 1
+# timestep information
+nTime = 1
+dt = 1e9
 time = 0
 
-#set the max iterations and convergence criterion
-maxIter = 100
-converged=1e-6
+# set iteration and convergence criterion
+maxIter = 10
+converged = 1e-6
 
-# thermal properties
-k = 0.1
+# thermophysical properties
 rho = 1000
-cp = 1000
-k = 100
+cp = 4000
+k = 0.5
 
-# convection parameters
-ho = 25
+# surface convection parameters
+ho = 50
 To = 200
 
-# coefficients
-coeffs = ScalarCoeffs(mygrid.ncv)
+# define coefficients
+coeffs = ScalarCoeffs(grid.ncv)
 
-# initial condition
+# Initial conditions
 T0 = 300
+U0 = 0.01
 
-# initialize field variable arrays
-T = T0*np.ones(mygrid.ncv+2)
 
-# boundary condition
-west_bc = DirichletBC(T, mygrid, 400, BoundaryLocation.WEST)
-east_bc = DirichletBC(T, mygrid, 0, BoundaryLocation.EAST)
+# Initialize field variable arrays
+T = T0*np.ones(grid.ncv+2)
+Uhe = U0*np.ones(grid.ncv+1)
+
+# define boundary conditions
+west_bc = DirichletBC(T,grid,400,BoundaryLocation.WEST)
+east_bc = DirichletBC(T,grid,0,BoundaryLocation.EAST)
 
 # apply boundary conditions
 west_bc.apply()
 east_bc.apply()
 
-
-# list to store the solution at each iteration
-T_solns = [np.copy(T)]
-
 # define the transient model
 Told = np.copy(T)
-transient = FirstOrderTransientModel(mygrid,T,Told,rho,cp,dt)
+transient = FirstOrderTransientModel(grid,T,Told,rho,cp,dt)
 
 # define the diffusion model
-diffusion = DiffusionModel(mygrid, T, k, west_bc, east_bc)
+diffusion = DiffusionModel(grid,T,k,west_bc,east_bc)
 
 # define the surface convection model
-surfaceConvection = SurfaceConvectionModel(mygrid,T,ho,To)
+surfaceConvection = SurfaceConvectionModel(grid,T,ho,To)
 
-# # # iterate until the solution is converged
+# define the advection model
+advection = UpwindAdvectionModel(grid,T,Uhe,rho,cp,west_bc,east_bc)
+
+
+# loop through all timesteps
 for tStep in range(nTime):
-
-    # update the time information
+    # update time
     time += dt
 
-    # print the timestep information
+    # print timestep informatin
     print("Timestep = {}; Time = {}".format(tStep,time))
-
 
     # store the old temperature field
     Told[:] = T[:]
 
-    # iterate until converge
+    # iterate until solution is converged
     for i in range(maxIter):
-    
-        # zero the coeff and add 
+        # zero out the coefficents and add
         coeffs.zero()
         coeffs = diffusion.add(coeffs)
         coeffs = surfaceConvection.add(coeffs)
+        coeffs = advection.add(coeffs)
         coeffs = transient.add(coeffs)
-
+        
+    
         # compute residual and check for convergence
         maxResid = norm(coeffs.rP, np.inf)
         avgResid = np.mean(np.absolute(coeffs.rP))
-        print("Iteration = {} ; Resid = {} ; Avg. Resid = {}".format(i,maxResid, avgResid) )
+        print("Iteration = {} ; MaxResid = {} ; AvgResid = {}".format(i,maxResid, avgResid) )
+        
         if maxResid < converged:
             break
 
@@ -512,24 +527,8 @@ for tStep in range(nTime):
         west_bc.apply()
         east_bc.apply()
 
-    # store the solution
-    T_solns.append(np.copy(T))
-        
 
-
-# plotting
-i = 0
-for Ti in T_solns:
-    plt.plot(mygrid.xP, Ti, label = str(i))
-    i += 1
-
-
-plt.title('Implicit')
-plt.xlabel('X')
-plt.ylabel('T')
-plt.savefig('pic/1d_transient_implicit.png')
+plt.plot(grid.xP, T)
+plt.xlabel("X")
+plt.ylabel("T")
 plt.show()
-
-
-
-    

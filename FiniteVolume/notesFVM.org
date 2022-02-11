@@ -1415,7 +1415,7 @@
    \end{equation*}
    #+end_export
    Then:
-   | $Pe $ |              $S $ |
+   | $Pe$ |              $S$ |
    |-------+-------------------|
    |  0.01 | 1-0.0025+0.00004- |
    |     1 |   1-0.025+0.0416- |
@@ -1427,6 +1427,82 @@
    Else if the profile is non linear, the Taylor series does not give any useful information. So, at high $Pe$, the false
    diffusion by UDS is not as bad. But UDS is a first order scheme and therefore, its accuracy is limited. So, we need
    to look for ways to improve accuracy of UDS while preserving stability. 
+
+** Improvements to Advection Scheme
+   
+*** Power Law Scheme
+    By choosing the appropriate weighting coefficient, $\alpha_e$, we can prevent the linearization coefficients from taking
+    the incorrect signs. From the generalized UDS
+    #+begin_export latex
+    \begin{equation*}
+    T_e = \frac{1+\alpha_e}{2}T_P + \frac{1-\alpha_e}{2}T_E
+    \end{equation*}
+    #+end_export
+    with:
+    #+begin_export latex
+    \begin{equation*}
+    \alpha_e = \frac{Pe^2}{5 + Pe^2}
+    \end{equation*}
+    #+end_export
+    At $Pe \approx 1$, $\alpha_e \approx 1/2$, so the scheme is _2nd order_ accurate.\\
+    At large $Pe$, the scheme approaches UDS and can only be _1st order_ accurate. This is only a
+    partial solution. 
+
+*** Deferred Correction Approach
+    The idea is use UDS as main advection scheme, then linearized accordingly.
+    Note here that the UDS term are subtracted from the discretized equation. \\
+    Also, the higher order terms for higher order schemes are added explicitly.\\
+    These two are not linearized. As a result, the linearization process only maintains the
+    stability of the UDS. \\
+    The advective flux through east face of a control volume can be written as:
+    #+begin_export latex
+    \begin{equation*}
+    F_e = F_e^{UDS} + (F_e^{HOS} - F_e^{UDS})
+    \end{equation*}
+    #+end_export
+    with $F_e^{UDS}$ and $F_e^{HOS}$ are the flux from UDS and flux from higher order scheme respectively. \\
+    Linearization is only carried out in the 1st term, because this will guarantee stability. This can be not
+    exact because it is UDS-based, not higher order schemes. Iteration is needed to arrive at the solution. 
+
+*** Central Difference Scheme (CDS)
+    We can also use the CDS scheme and implement it with the deferred correction approach. Recall the CDS scheme:
+    #+begin_export latex
+    \begin{equation*}
+    T_e = \frac{1}{2}(T_P + T_E)
+    \end{equation*}
+    #+end_export
+
+*** Quadratic Upwind Interpolation for Convective Kinematics (QUICK)
+    This scheme is derived by passing a parabola through cell values in the upwind direction. \\
+    Flow in _positive_ direction, interpolation for east integration point involves cells $W$, $P$, and $E$.\\
+    Flow in _negative_ direction, interpolation for east integration point involves cells $P$, $E$, and $EE$\\
+    This results in in the following expression for $T(x)$:
+    #+begin_export latex
+    \begin{equation*}
+    \begin{aligned}
+    T(x) = \frac{(x-x_P)(x-x_E)}{(x_W-x_P)(x_W-x_E)}T_W &+ \frac{(x-x_W)(x-x_E)}{(x_P-x_W)(x_P-x_E)}T_P\\
+    &+\frac{(x-x_W)(x-x_P)}{(x_E-x_W)(x_E-x_P)}T_E
+    \end{aligned}
+    \end{equation*}
+    #+end_export
+    for uniform grid spacing $\Delta$:
+    #+begin_export latex
+    \begin{equation*}
+    \begin{aligned}
+    T_e &= -\frac{1}{8}T_W + \frac{3}{4}T_P + \frac{3}{8}T_E\\
+    T_w &= -\frac{1}{8}T_WW + \frac{3}{4}T_W + \frac{3}{8}T_P
+    \end{aligned}
+    \end{equation*}
+    #+end_export
+    Note how the negative sign could cause the coefficients having the wrong signs if implement directly.\\
+    Nevertheless, if implement using deferred correction approach, the QUICK scheme is an effective higher order scheme. 
+
+
+    
+** Implementation:[[file:advection_diffusion.py][Python code]] 
+
+    
+    
 
    
    
