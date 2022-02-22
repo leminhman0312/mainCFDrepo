@@ -284,8 +284,6 @@ class DiffusionModel:
         self._west_bc = west_bc
         self._east_bc = east_bc
 
-
-
     # add diffusion terms to coefficient arrays
     def add(self,coeffs):
 
@@ -475,6 +473,9 @@ diffusion = DiffusionModel(mygrid, T, k, west_bc, east_bc)
 # define the surface convection model
 surfaceConvection = SurfaceConvectionModel(mygrid,T,ho,To)
 
+resList = []
+iterList = []
+
 # # # iterate until the solution is converged
 for tStep in range(nTime):
 
@@ -514,22 +515,25 @@ for tStep in range(nTime):
 
     # store the solution
     T_solns.append(np.copy(T))
+    resList.append(avgResid)
+    iterList.append(i)
         
 
 
 # plotting
-i = 0
-for Ti in T_solns:
-    plt.plot(mygrid.xP, Ti, label = str(i))
-    i += 1
+# i = 0
+# for Ti in T_solns:
+#     plt.plot(mygrid.xP, Ti, label = str(i))
+#     i += 1
 
+# plt.title('Implicit')
+# plt.xlabel('X')
+# plt.ylabel('T')
+# plt.savefig('pic/1d_transient_implicit.png')
+# plt.show()
 
-plt.title('Implicit')
-plt.xlabel('X')
-plt.ylabel('T')
-plt.savefig('pic/1d_transient_implicit.png')
+plt.plot(resList, iterList)
 plt.show()
-
 
 
     

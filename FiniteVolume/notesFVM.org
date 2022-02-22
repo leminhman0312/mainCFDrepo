@@ -2,7 +2,7 @@
 #+AUTHOR: Max Le
 #+LATEX_HEADER: \usepackage[margin=1in]{geometry} \usepackage{graphicx} \usepackage{amssymb} \usepackage{amsmath}
 #+LATEX_HEADER: \usepackage[scaled=1.05]{helvet} \renewcommand\familydefault{\sfdefault}
-#+LATEX_HEADER: \usepackage{listings} \usepackage{xcolor} \usepackage{hyperref}
+#+LATEX_HEADER: \usepackage{listings} \usepackage{xcolor} \usepackage{hyperref} \usepackage{extarrows} \usepackage{fancyhdr} \usepackage{lastpage}
 #+LATEX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} \definecolor{codegray}{rgb}{0.5,0.5,0.5} \definecolor{codepurple}{rgb}{0.58,0,0.82} \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 #+DATE: \today
 #+OPTIONS: tex:t 
@@ -29,6 +29,12 @@
 }
 
 \lstset{style=mystyle}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\rightmark}
+\fancyfoot[R]{Page \thepage / \pageref{LastPage}}
 #+end_export
 
 
@@ -1496,17 +1502,139 @@
     #+end_export
     Note how the negative sign could cause the coefficients having the wrong signs if implement directly.\\
     Nevertheless, if implement using deferred correction approach, the QUICK scheme is an effective higher order scheme. 
-
-
     
-** Implementation:[[file:advection_diffusion.py][Python code]] 
-
-    
-    
-
+** Implementation:[[file:advection_diffusion.py][Python code]]
+   #+begin_export latex
+   \lstinputlisting[language=Python]{advection_diffusion.py}
+   #+end_export
+   #+begin_export latex
+   \clearpage
+   #+end_export
+* SOLUTION OF MASS AND MOMENTUM EQUATIONS
+** Problem Definition
+   Here, we will solve a system of coupled _mass_ and _momentum_ equations using the finite volume method.
+   For _compressible flow_, we use the *density-based method*; however, this method is not applicable to
+   _incompressible flow_.  Here, we consider the *pressure-based methods*, which can be applied to both compressible
+   and incompressible flow.\\
+   - Conservation of mass with constant density and no mass sources/sinks:
+     #+begin_export latex
+     \begin{equation*}
+     \nabla \cdot (\rho \textbf{u}) = 0
+     \end{equation*}
+     #+end_export
+   - Conservation of momentum in x-direction, $f_x$ is body force per unit volume
+     #+begin_export latex
+     \begin{equation*}
+     \frac{\partial \rho u }{\partial t} + \nabla \cdot (\rho \textbf{u}u) = -\frac{dp}{dx} + \nabla \cdot (\mu \nabla u) + f_x
+     \end{equation*}
+     #+end_export
+** Discretization
+   Mass equation is discretized just like previous chapter, resulting in
+   #+begin_export latex
+   \begin{equation*}
+   \dot{m}_e - \dot{m}_w = 0
+   \end{equation*}
+   #+end_export
+   For the momentum equation, the procedure is similar: we integrate over both space and time.\\
+   For the transient term:
+   #+begin_export latex
+   \begin{equation*}
+   \int_{t-\Delta t}^{t+\Delta t} \int_V \frac{\partial (\rho u)}{\partial t}dVdt = \left(\rho u_P V_P\right)^{t+\Delta t/2} - \left(\rho u_P V_P\right)^{t-\Delta t/2}
+   \end{equation*}
+   #+end_export
+   Interpolation at values $t-\Delta t/2$ and $t + \Delta t/2$ is conducted like in  previous chapter (i.e. first order implicit, second order implicit).
+   Assuming constant density and constant volume, the transient term divided by $\Delta t$ is:
+   #+begin_export latex
+   \begin{equation*}
+   \rho v_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t}
+   \end{equation*}
+   #+end_export
+   For the convection term:
+   #+begin_export latex
+   \begin{equation*}
+   \begin{alignedat}{2}
+   &\int_V \nabla \cdot (\rho \textbf{u}u)dV \xlongequal{\textrm{Gauss}}\int_S \rho \textbf{u}u \cdot \textbf{n}dS
+   &&\approx \sum_{i = 0}^{N_{ip}-1} \rho u \textbf{u} \cdot \textbf{n}_{ip} A_{ip}\\
+   &\textrm{For 1D grid, this becomes:} &&\approx \dot{m}_e u_e - \dot{m}_e u_w
+   \end{alignedat}
+   \end{equation*}
+   #+end_export
+   For the pressure term, we treat it similar to a source term:
+   #+begin_export latex
+   \begin{equation*}
+   -\int_V \frac{dp}{dx} dV \approx -\frac{dp}{dx} \biggr \rvert_P V_P
+   \end{equation*}
+   #+end_export
+   For the viscous term, in the 1D case, we separate the the normal stresses (East/West) and the viscous shear stresses (North/South)
+   #+begin_export latex
+   \begin{equation*}
+   \begin{aligned}
+   \int_V \nabla \cdot (\mu \nabla u) dV &= \int_S \mu\nabla u \cdot \textbf{n}dS
+   \approx \sum_{i = 0}^{N_{ip}-1}\mu \nabla u \cdot \textbf{n}_{ip} A_{ip}\\
+   &= \mu \frac{\partial u}{\partial x} \biggr \rvert_e A_e - \mu\frac{\partial u}{\partial x}\biggr \rvert_w A_w
+   + \mu\frac{\partial u}{\partial y}\biggr \rvert_n A_n - \mu \frac{\partial u}{\partial y}\biggr \rvert_s A_s\\
+   &= \mu\frac{\partial u}{\partial x}\biggr\rvert_e A_e - \mu \frac{\partial u }{\partial x}\biggr \rvert_w A_w + F_u
+   \end{aligned}
+   \end{equation*}
+   #+end_export
+   Note that all of our discretized terms are result of volume integration.  For the time integration, each term will be multiplied by an additional $\Delta t$
+   term. This is why our transient term has a $1/\Delta t$ factor, just so that we can get it in the form below. 
+   Note that $F_u$ is the net viscous shear stress acting on the control volume.\\
+   Neglecting any body forces, our discretized momentum equation is as follow. 
+   #+begin_export latex
+   \begin{equation*}
+   \rho v_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t} + \dot{m}_e u_e - \dot{m}_w u_w =
+   -\frac{dp}{dx}\biggr\rvert_P V_P + \mu \frac{\partial u}{\partial x}\biggr\rvert_e A_e - \mu\frac{\partial u}{\partial x}\biggr\rvert_w A_w
+   + F_u
+   \end{equation*}
+   #+end_export
+   Note also how this equation is similar to the transport equation derived for convection of scalar, only with the addition of the pressure and viscous term.
+   On the same note, the diffusion coefficients are defined similar to the energy equation, only replace $k$ with $\mu$:
+   #+begin_export latex
+   \begin{equation*}
+   \begin{aligned}
+   D_e &= \frac{\mu A_e}{\Delta x_{PE}}\\
+   D_w &= \frac{\mu A_w}{\Delta x_{WP}}
+   \end{aligned}
+   \end{equation*}
+   #+end_export
+   With this in mind, we can estimate the diffusive terms using piecewise linear approximation, i.e:
+   #+begin_export latex
+   \begin{equation*}
+   \begin{aligned}
+   \mu \frac{\partial u}{\partial x} \biggr \rvert_e A_e &= D_e(u_E-u_P)\\
+   \mu \frac{\partial u}{\partial x} \biggr \rvert_w A_w &= D_w(u_P-u_W)
+   \end{aligned}
+   \end{equation*}
+   #+end_export
+   We then subtract the mass equation multiplied by $u_P$ from the momentum equation. Also substitute in the estimations for the diffusive terms:
+   #+begin_export latex
+   \begin{equation*}
+   \rho v_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t} + \dot{m}_e(u_e-u_P) - \dot{m}_w (u_w-u_P) =
+   -\frac{dp}{dx}\biggr\rvert_P V_P + D_e(u_E-u_P) - D_w(u_P-u_W) + F_u
+   \end{equation*}
+   #+end_export
+   A first order implicit time integration and UDS advection scheme will give the following cell residual:
+   #+begin_export latex
+   \begin{equation*}
+   \begin{aligned}
+   r_P &= \rho V_P \frac{u_P-u_P^o}{\Delta t} + \dot{m}_e\left[\left(\frac{1+\alpha_e}{2} \right)u_P +  \left(\frac{1-\alpha_e}{2} \right)u_E -u_P\right]\\
+   &\dot{m}_w\left[\left(\frac{1+\alpha_w}{2} \right)u_W +  \left(\frac{1-\alpha_w}{2} \right)u_P -u_P\right] + \frac{dp}{dx}\biggr\rvert_P V_P\\
+   &+D_w(u_P-u_W) - D_e(u_E-u_P) - F_u
+   \end{aligned}
+   \end{equation*}
+   #+end_export
+   where the coefficients are as follow:
+   #+begin_export latex
+   \begin{equation*}
+   \begin{aligned}
+   a_W &= -D_w - \frac{\dot{m}_w}{2}(1+\alpha_w)\\
+   a_E &= -D_e + \frac{\dot{m}_e}{2}(1-\alpha_e)\\
+   a_P &= \frac{\rho V_P}{\Delta t} -a_W-a_E
+   \end{aligned}
+   \end{equation*}
+   #+end_export
    
    
    
-   
-
 

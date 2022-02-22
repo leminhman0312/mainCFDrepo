@@ -1,4 +1,4 @@
-# Solving the 1D Diffusion Equation
+# Solving the 1D Diffusion Equation: -k del sq T - S = 0
 import numpy as np
 from enum import Enum
 from scipy.sparse.linalg import spsolve
@@ -23,11 +23,11 @@ class Grid:
         # calculate the control volume length
         dx = lx/float(ncv)
 
-        # calculate the face locations
+        # array of x location of face integration points
         # generate array of control volume element with length dx each
         self._xf = np.array([i*dx for i in range(ncv+1)])
 
-        # calculate the cell centroid locations
+        # array of x location of the cell centroid
         # Note: figure out why add a xf[-1] last item 
         self._xP = np.array([self._xf[0]] +
                              [0.5*(self._xf[i]+self._xf[i+1]) for i in range(ncv)] +
@@ -95,8 +95,6 @@ class Grid:
 class ScalarCoeffs:
     def __init__(self,ncv):
         # # constructor:
-        # ncv = number of control volume in domain
-
         self._ncv = ncv
         self._aP = np.zeros(ncv)
         self._aW = np.zeros(ncv)
@@ -272,7 +270,7 @@ class RobinBC:
 
 
 
-# class DiffusionModel defining a defusion model
+# class DiffusionModel defining a diffusion model
 class DiffusionModel:
     def __init__(self,grid,phi,gamma,west_bc,east_bc):
         # constructor
@@ -289,18 +287,18 @@ class DiffusionModel:
 
         # calculate west/east diffusion flux for each face
         flux_w = -self._gamma*self._grid.Aw*(self._phi[1:-1]-self._phi[0:-2])\
-            /self._grid.dx_WP # Fw = k*(Tp-Tw)*Aw/ dx_WP
+            /self._grid.dx_WP # Fw = k*Aw*(Tp-Tw)*Aw/ dx_WP, each in [1:-1] minus each in [0:-2] aka Tp - Tw ( on the left)
         flux_e = -self._gamma*self._grid.Ae*(self._phi[2:]-self._phi[1:-1])\
-            /self._grid.dx_PE # Fe = k*(Te-Tp)*Ae/dx_PE
+            /self._grid.dx_PE # Fe = k*Ae*(Te-Tp)*Ae/dx_PE, each in [2:] minus each in [1:-1] aka Te - Tp ( on the right)
 
         # calculate the linearized coefficient [aW, aP, aE]
-        coeffW = -self._gamma*self._grid.Aw/self._grid.dx_WP
-        coeffE = -self._gamma*self._grid.Ae/self._grid.dx_PE
-        coeffP = -coeffW - coeffE # should be +?
+        coeffW = -self._gamma*self._grid.Aw/self._grid.dx_WP # -Dw or -kAw/dxwp
+        coeffE = -self._gamma*self._grid.Ae/self._grid.dx_PE # -De or -kAe/dxpe
+        coeffP = -coeffW - coeffE                            # double negative to get plus
 
         # modified the linearized coefficient on the boundaries
-        coeffP[0] += coeffW[0]*self._west_bc.coeff()
-        coeffP[-1] += coeffE[-1]*self._east_bc.coeff()
+        coeffP[0]  = coeffP[0]  + coeffW[0]*self._west_bc.coeff()
+        coeffP[-1] = coeffP[-1] + coeffE[-1]*self._east_bc.coeff()
 
         # zero the coefficients that are not used (on the boundary)
         coeffW[0] = 0.0
@@ -408,6 +406,10 @@ T_solns = [np.copy(T)]
 # # # define the diffusion model
 diffusion = DiffusionModel(mygrid, T, k, west_bc, east_bc)
 
+
+avgResidList = []
+iterList = []
+
 # # # iterate until the solution is converged
 for i in range(maxIter):
     # zero the coeff and add 
@@ -431,6 +433,9 @@ for i in range(maxIter):
 
     # store the solution
     T_solns.append(np.copy(T))
+
+    avgResidList.append(avgResid)
+    iterList.append(i)
         
 
 
@@ -439,10 +444,15 @@ for Ti in T_solns:
     plt.plot(mygrid.xP, Ti, label = str(i))
     i += 1
 
-plt.title('Explicit')
-plt.xlabel('X')
-plt.ylabel('T')
-plt.savefig('pic/1d_transient_explicit.png')
+# plt.title('Explicit')
+# plt.xlabel('X')
+# plt.ylabel('T')
+# plt.show()
+# plt.savefig('pic/1d_transient_explicit.png')
+
+plt.title('Residual')
+plt.plot(avgResidList,iterList)
+plt.show()
 
 
 

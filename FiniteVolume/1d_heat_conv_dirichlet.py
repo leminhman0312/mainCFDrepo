@@ -436,6 +436,8 @@ diffusion = DiffusionModel(mygrid, T, k, west_bc, east_bc)
 # define the surface convection model
 surfaceConvection = SurfaceConvectionModel(mygrid,T,ho,To)
 
+avgResidList = []
+iterList = []
 # # # iterate until the solution is converged
 for i in range(maxIter):
 
@@ -462,19 +464,23 @@ for i in range(maxIter):
     # store the solution
     T_solns.append(np.copy(T))
         
+    avgResidList.append(avgResid)
+    iterList.append(i)
 
 
 # plotting
-i = 0
-for Ti in T_solns:
-    plt.plot(mygrid.xP, Ti, label = str(i))
-    i += 1
+# i = 0
+# for Ti in T_solns:
+#     plt.plot(mygrid.xP, Ti, label = str(i))
+#     i += 1
     
-plt.xlabel('X')
-plt.ylabel('T')
-plt.legend(loc='right')
-plt.show()
+# plt.xlabel('X')
+# plt.ylabel('T')
+# plt.legend(loc='right')
+# plt.show()
 
+# print(iterList)
 
-
-    
+# plt.title('Residual')
+# plt.plot(avgResidList,iterList)
+# plt.show()

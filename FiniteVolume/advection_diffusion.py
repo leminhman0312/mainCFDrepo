@@ -489,6 +489,8 @@ surfaceConvection = SurfaceConvectionModel(grid,T,ho,To)
 # define the advection model
 advection = UpwindAdvectionModel(grid,T,Uhe,rho,cp,west_bc,east_bc)
 
+iterList = []
+resList = []
 
 # loop through all timesteps
 for tStep in range(nTime):
@@ -527,8 +529,9 @@ for tStep in range(nTime):
         west_bc.apply()
         east_bc.apply()
 
+        resList.append(avgResid)
+        iterList.append(i)
 
-plt.plot(grid.xP, T)
-plt.xlabel("X")
-plt.ylabel("T")
+
+plt.plot(iterList,resList)
 plt.show()
