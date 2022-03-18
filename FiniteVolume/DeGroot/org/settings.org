@@ -1,0 +1,31 @@
+* Latex code listing settings :ignore:
+#+BEGIN_EXPORT latex
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\sffamily\small,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+\renewcommand{\arraystretch}{2}
+\renewcommand{\footrulewidth}{0.4pt}% Default \footrulewidth is 0pt
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\fancyhead[L]{\scriptsize{\leftmark}}
+\fancyhead[R]{\scriptsize{\rightmark}}
+\fancyfoot[L]{\scriptsize{Page \thepage / \pageref{LastPage}}}
+\newpage
+#+END_EXPORT

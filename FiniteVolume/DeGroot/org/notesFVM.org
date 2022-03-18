@@ -1,0 +1,29 @@
+#+TITLE: Notes on Finite Volume Method MME 9710
+#+AUTHOR: Max Le
+#+LATEX_HEADER: \usepackage[margin=0.5in]{geometry} \usepackage{graphicx} \usepackage{amssymb} \usepackage{amsmath}
+#+LATEX_HEADER: \usepackage[fontsize=13pt]{scrextend}
+#+LATEX_HEADER: \usepackage{helvet} \renewcommand\familydefault{\sfdefault}
+#+LATEX_HEADER: \usepackage{listings} \usepackage{xcolor} \usepackage{hyperref} \usepackage{extarrows} \usepackage{fancyhdr} \usepackage{lastpage} \usepackage{mathtools}
+#+LATEX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} \definecolor{codegray}{rgb}{0.5,0.5,0.5} \definecolor{codepurple}{rgb}{0.58,0,0.82} \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+#+DATE: \today
+#+OPTIONS: tex:t
+#+LATEX: \setlength\parindent{0pt}
+
+
+#+INCLUDE: "~/CFD_stuff/mainCFDrepo/FiniteVolume/DeGroot/org/settings.org"
+#+INCLUDE: "~/CFD_stuff/mainCFDrepo/FiniteVolume/DeGroot/org/intro.org"
+#+INCLUDE: "~/CFD_stuff/mainCFDrepo/FiniteVolume/DeGroot/org/chap2.org"
+#+INCLUDE: "~/CFD_stuff/mainCFDrepo/FiniteVolume/DeGroot/org/chap3.org"
+#+INCLUDE: "~/CFD_stuff/mainCFDrepo/FiniteVolume/DeGroot/org/chap4.org"
+#+INCLUDE: "~/CFD_stuff/mainCFDrepo/FiniteVolume/DeGroot/org/chap5.org"
+
+   
+   
+      
+
+
+
+
+
+
+

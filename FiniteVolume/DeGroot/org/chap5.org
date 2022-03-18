@@ -1,0 +1,622 @@
+* SOLUTION OF MASS AND MOMENTUM EQUATIONS
+** Problem Definition
+   Here, we will solve a system of coupled _mass_ and _momentum_ equations using the finite volume method.
+   For _compressible flow_, we use the *density-based method*; however, this method is not applicable to
+   _incompressible flow_.  Here, we consider the *pressure-based methods*, which can be applied to both compressible
+   and incompressible flow.\\
+   - Conservation of mass with constant density and no mass sources/sinks:
+     #+BEGIN_EXPORT latex
+     \begin{equation*}
+     \nabla \cdot (\rho \textbf{u}) = 0
+     \end{equation*}
+     #+END_EXPORT
+   - Conservation of momentum in x-direction, $f_x$ is body force per unit volume
+     #+BEGIN_EXPORT latex
+     \begin{equation*}
+     \frac{\partial \rho u }{\partial t} + \nabla \cdot (\rho \textbf{u}u) = -\frac{dp}{dx} + \nabla \cdot (\mu \nabla u) + f_x
+     \end{equation*}
+     #+END_EXPORT
+** Discretization
+   Mass equation is discretized just like previous chapter, resulting in
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \dot{m}_e - \dot{m}_w = 0
+   \end{equation*}
+   #+END_EXPORT
+   For the momentum equation, the procedure is similar: we integrate over both space and time.\\
+   For the transient term:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \int_{t-\Delta t}^{t+\Delta t} \int_V \frac{\partial (\rho u)}{\partial t}dVdt = \left(\rho u_P V_P\right)^{t+\Delta t/2} - \left(\rho u_P V_P\right)^{t-\Delta t/2}
+   \end{equation*}
+   #+END_EXPORT
+   Interpolation at values $t-\Delta t/2$ and $t + \Delta t/2$ is conducted like in  previous chapter (i.e. first order implicit, second order implicit).
+   Assuming constant density and constant volume, the transient term divided by $\Delta t$ is:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \rho v_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t}
+   \end{equation*}
+   #+END_EXPORT
+   For the convection term:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{alignedat}{2}
+   &\int_V \nabla \cdot (\rho \textbf{u}u)dV \xlongequal{\textrm{Gauss}}\int_S \rho \textbf{u}u \cdot \textbf{n}dS
+   &&\approx \sum_{i = 0}^{N_{ip}-1} \rho u \textbf{u} \cdot \textbf{n}_{ip} A_{ip}\\
+   &\textrm{For 1D grid, this becomes:} &&\approx \dot{m}_e u_e - \dot{m}_e u_w
+   \end{alignedat}
+   \end{equation*}
+   #+END_EXPORT
+   For the pressure term, we treat it similar to a source term:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   -\int_V \frac{dp}{dx} dV \approx -\frac{dp}{dx} \biggr \rvert_P V_P
+   \end{equation*}
+   #+END_EXPORT
+   For the viscous term, in the 1D case, we separate the the normal stresses (East/West) and the viscous shear stresses (North/South)
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \int_V \nabla \cdot (\mu \nabla u) dV &= \int_S \mu\nabla u \cdot \textbf{n}dS
+   \approx \sum_{i = 0}^{N_{ip}-1}\mu \nabla u \cdot \textbf{n}_{ip} A_{ip}\\
+   &= \mu \frac{\partial u}{\partial x} \biggr \rvert_e A_e - \mu\frac{\partial u}{\partial x}\biggr \rvert_w A_w
+   + \mu\frac{\partial u}{\partial y}\biggr \rvert_n A_n - \mu \frac{\partial u}{\partial y}\biggr \rvert_s A_s\\
+   &= \mu\frac{\partial u}{\partial x}\biggr\rvert_e A_e - \mu \frac{\partial u }{\partial x}\biggr \rvert_w A_w + F_u
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   Note that all of our discretized terms are result of volume integration.  For the time integration, each term will be multiplied by an additional $\Delta t$
+   term. This is why our transient term has a $1/\Delta t$ factor, just so that we can get it in the form below. 
+   Note that $F_u$ is the net viscous shear stress acting on the control volume.\\
+   Neglecting any body forces, our discretized momentum equation is as follow. 
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \rho v_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t} + \dot{m}_e u_e - \dot{m}_w u_w =
+   -\frac{dp}{dx}\biggr\rvert_P V_P + \mu \frac{\partial u}{\partial x}\biggr\rvert_e A_e - \mu\frac{\partial u}{\partial x}\biggr\rvert_w A_w
+   + F_u
+   \end{equation*}
+   #+END_EXPORT
+   Note also how this equation is similar to the transport equation derived for convection of scalar, only with the addition of the pressure and viscous term.
+   On the same note, the diffusion coefficients are defined similar to the energy equation, only replace $k$ with $\mu$:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   D_e &= \frac{\mu A_e}{\Delta x_{PE}}\\
+   D_w &= \frac{\mu A_w}{\Delta x_{WP}}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   With this in mind, we can estimate the diffusive terms using piecewise linear approximation, i.e:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \mu \frac{\partial u}{\partial x} \biggr \rvert_e A_e &= D_e(u_E-u_P)\\
+   \mu \frac{\partial u}{\partial x} \biggr \rvert_w A_w &= D_w(u_P-u_W)
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   We then subtract the mass equation multiplied by $u_P$ from the momentum equation. Also substitute in the estimations for the diffusive terms:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \rho v_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t} + \dot{m}_e(u_e-u_P) - \dot{m}_w (u_w-u_P) =
+   -\frac{dp}{dx}\biggr\rvert_P V_P + D_e(u_E-u_P) - D_w(u_P-u_W) + F_u
+   \end{equation*}
+   #+END_EXPORT
+   A first order implicit time integration and UDS advection scheme will give the following cell residual:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   r_P &= \rho V_P \frac{u_P-u_P^o}{\Delta t} + \dot{m}_e\left[\left(\frac{1+\alpha_e}{2} \right)u_P +  \left(\frac{1-\alpha_e}{2} \right)u_E -u_P\right]\\
+   &\dot{m}_w\left[\left(\frac{1+\alpha_w}{2} \right)u_W +  \left(\frac{1-\alpha_w}{2} \right)u_P -u_P\right] + \frac{dp}{dx}\biggr\rvert_P V_P\\
+   &+D_w(u_P-u_W) - D_e(u_E-u_P) - F_u
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   where the coefficients are as follow:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   a_W &= -D_w - \frac{\dot{m}_w}{2}(1+\alpha_w)\\
+   a_E &= -D_e + \frac{\dot{m}_e}{2}(1-\alpha_e)\\
+   a_P &= \frac{\rho V_P}{\Delta t} -a_W-a_E
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+** Pressure-Velocity Coupling
+   For incompressible flow problem, the pressure does not appear in the conservation of mass equation $\rightarrow$ because $\rho$ is constant.
+   As a result, the idea of "pressure-velocity coupling" for incompressible flow, is that we need the correct pressure that drives the velocities
+   in the momentum equation such that mass is conserved. We can also think of the conservation of mass equation as a constraint so that the correct
+   pressure can be determined.\\
+   - in 1D, knowing velocities at both inlet and outlet can help us to back out the pressure in the momentum equation.
+   - in 2D/3D, a mass flux through a west face is not certain to come out at the east face. In fact, we cannot be sure
+     about how the mass flux will be splitted among the remaining faces. Fortunately, it is the pressure at the surrounding
+     control volumes that determine how the mass is split.
+     #+BEGIN_EXPORT latex
+     \begin{center}
+     \includegraphics[scale=0.5]{../pic/pressure_split.png}
+     \end{center}
+     #+END_EXPORT
+   Consider a _steady_, _inviscid_ flow in a duct with _uniform cross sectional area_, the exact solution is that both velocities and pressure will be constant.
+   For a control volume $P$, the discrete mass equation is:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \dot{m}_e - \dot{m}_w = 0
+   \end{equation*}
+   #+END_EXPORT
+   Likewise, the discrete momentum equation is:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \dot{m}_eu_e - \dot{m}_wu_w = - \frac{dp}{dx} \biggr \rvert_P V_P
+   \end{equation*}
+   #+END_EXPORT
+   Say we use central differences to calculate the mass fluxes base on the integration point velocities:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \dot{m}_e &= \rho A_e \left( \frac{u_P + u_E} {2}\right)\\
+   \dot{m}_w &= \rho A_w \left( \frac{u_W + u_P} {2}\right)
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   The pressure gradient can be computed using the surrounding pressure, with $\Delta x = x_e - x_w$. 
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \frac{dp}{dx} \biggr \rvert_P = \frac{P_E-P_W}{2\Delta x}
+   \end{equation*}
+   #+END_EXPORT
+   Substituting the above expressions into the conservation of mass equation, we get:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \rho A_e \left( \frac{u_P + u_E} {2}\right) - \rho A_w \left( \frac{u_W + u_P} {2}\right) = 0\\
+   \end{equation*}
+   #+END_EXPORT
+   Assuming constant density and cross sectional area
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \left( \frac{u_P + u_E} {2}\right) - \left( \frac{u_W + u_P} {2}\right) &= 0\\
+   \Aboxed{u_E &= u_W}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   Likewise, a substitution into the momentum equation gives:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \frac{\dot{m}^2_e}{\rho A_e } - \frac{\dot{m}^2_w}{\rho A_w } &= -\frac{p_E-p_W}{2\Delta x} V_P\\
+   0 &= -\frac{p_E-p_W}{2\Delta x} V_P\\
+   \Aboxed{p_E &= p_W}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   These results make sense because it says that the velocity/pressure on the side of cell $P$ must be equal. The problem is that it does not
+   say anything about the pressure/velocity within the cell $P$.  This allows for oscillating pressure/velocity field:
+   #+BEGIN_EXPORT latex
+   \begin{center}
+   \includegraphics[scale=0.8]{../pic/cellP_Oscillating.png}
+   \end{center}
+   #+END_EXPORT
+   This suggests that there is an unconstrained mode in $p$ and $u$ that can grow without bound. This is still accepted
+   as solution to the problem ! In other words, the solution to the side of cell $P$, cell $W$ and $E$, can grow to
+   any value, as long as they are both equal.\\
+   To solve this, we explore the idea that the CDS approximation could lead to this problem. Thus, we implemented
+   an upwind scheme for evaluation of the mass fluxes (assuming flow in the positive direction):
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \dot{m}_e &= \rho A_e u_P\\
+   \dot{m}_e &= \rho A_e u_P
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   Our mass equation is then:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \rho A_e u_P - \rho A_w u_W &= 0\\
+   \Aboxed{u_P &= u_W}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   The equation above will no longer allows the unconstrained velocity mode to exist. Here, only solution where $u$ is constant everywhere is now allowed. In the momentum equation, the left side
+   is still zero (since mass is conserved), resulting in:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \boxed{p_E = p_W}
+   \end{equation*}
+   #+END_EXPORT
+   So the same problem still exists for the pressure field. In fact, no matter what approximation method is used for
+   the integration point velocities, the same problem always exists for the pressure field if the same approximation
+   is used to calculate the mass fluxes (because the left side of the momentum equation will cancel out exactly)\\
+   There are 2 main methods to address this problem with the pressure field:
+   - Staggered grids
+   - Colocated grids
+** Staggered Grid Methods
+   This method uses 2 overlapping grids: one stores =velocites= at its =cell center=, the other stores =pressure= at its =cell center=.
+   The grids are shifted by one half of the grid spacing relative to one another.
+   #+BEGIN_EXPORT latex
+   \begin{center}
+   \includegraphics[scale=0.8]{../pic/staggered_1d.png}
+   \end{center}
+   #+END_EXPORT
+   As we can see, there are 2 control volumes: mass and momentum.  In the diagram above, the mass equation is evaluated
+   over the mass control volume. Staggered grid stores velocities at the integration point of the mass control volume,
+   so no interpolation is required.\\
+   A mass control volume $P$ is as followed (shaded in green): 
+   #+BEGIN_EXPORT latex
+   \begin{center}
+   \includegraphics[scale=0.8]{../pic/staggered_1d_mass.png}
+   \end{center}
+   #+END_EXPORT
+   As in the digram above, we can write a discrete mass equation for control volume P:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \dot{m}_e - \dot{m}_w &= 0\\
+   \rho A_e u_P - \rho A_w u_W &= 0\\
+   \Aboxed{u_W &= u_P}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   _Note_: the subscripts on the velocities are in reference to the momentum control volume labeling. The equation above implies
+   that there can be no decoupling of the velocity field.\\
+   A momentum control volume $P$ is as followed (shaded in green): 
+   #+BEGIN_EXPORT latex
+   \begin{center}
+   \includegraphics[scale=0.8]{../pic/staggered_1d_momentum.png}
+   \end{center}
+   #+END_EXPORT
+   The momentum equation can be written out based on the diagram above:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \dot{m}_e u_e - \dot{m}_wu_w &= -\frac{dp}{dx}\biggr\rvert_P V_P\\
+   \frac{\dot{m}_e^2}{\rho A_e} - \frac{\dot{m}_w^2}{\rho A_w} &= -\frac{p_E - p_P}{\Delta x} V_P\\
+   0 &= -\frac{p_E - p_P}{\Delta x} V_P\\
+   \Aboxed{p_E &= p_P}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   This shows that staggered grid is effective in removing possibility of pressure oscillations, which prevents
+   the decoupling of velocity and pressure fields. One thing to note is that staggered grid becomes impractical
+   in arbitrary unstructured meshes, which is the standard for CFD involving complex geometries.
+** Collocated Grid Methods
+   Developed by Rhie and Chow (1983), collocated grid is a method where velocity and pressure share the same grid.
+   This was successful in maintaining coupling between velocity and pressure fields. The main ideas are:
+   - _advected_ velocity is otained from a different equation from the _advecting velocity_
+   - _advecting velocity_: used in the calculation of mass flux
+   - _advected velocity_: the one that is multiplied by the mass flux in the advection term
+   For the East face, the mass flux is defined as:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \dot{m}_e = \rho A_e \hat{u}_e
+   \end{equation*}
+   #+END_EXPORT
+   - here, $\hat{u}_e$ is the advecting velocity. This term is obtained from a special momentum equation, deriving later.
+   - Our advected velocity is the same as before, $u_e$.  It is calculated using the deferred correction approach like before.
+   - We desire $\hat{u}_e \approx u_e$, but in reality, the expressions contain different influences and oscillating pressure and
+   velocity fields will be damped out of the solution. \\
+   To derive the special momentum equation and the corresponding advecting velocity, we recall the cell residual that was derived previously:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   r_P = \rho V_P \frac{\left(u_P\right)^{t+\Delta t/2} - \left(u_P\right)^{t-\Delta t/2}}{\Delta t} + \dot{m}_e u_e - \dot{m}_w u_w
+   +\frac{dp}{dx}\biggr\rvert_P V_P - \mu \frac{\partial u}{\partial x}\biggr\rvert_e A_e + \mu\frac{\partial u}{\partial x}\biggr\rvert_w A_w
+   - F_u
+   \end{equation*}
+   #+END_EXPORT
+   Assume a converged, steady state solution $\rightarrow r_P = 0$ and transient term vanishes, the above equation becomes:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \dot{m}_e u_e - \dot{m}_w u_w +\frac{dp}{dx}\biggr\rvert_P V_P - \mu \frac{\partial u}{\partial x}\biggr\rvert_e A_e + \mu\frac{\partial u}{\partial x}\biggr\rvert_w A_w 
+   - F_u = 0
+   \end{equation*}
+   #+END_EXPORT
+   We implement piecewise profile for the velocity derivatives and UDS for the advection term, this becomes:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   &\dot{m}_e\left[\left(\frac{1+\alpha_e}{2}\right)u_P +  \left(\frac{1+\alpha_e}{2}\right)u_E - u_P \right]\\
+   -&\dot{m}_w \left[\left(\frac{1+\alpha_w}{2}\right)u_W  + \left(\frac{1-\alpha_w}{2}\right)u_P - u_P \right] + \frac{dp}{dx}\biggr \rvert_P V_P
+   + D_w (u_P-u_W)\\
+   -&D_e(u_E-u_P)-F_u = 0
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   or:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   &\left[D_w + \frac{\dot{m}_w}{2}(1+\alpha_w) + D_e - \frac{\dot{m}_e}{2}(1-\alpha_e)   \right]u_P + \left[-D_w - \frac{\dot{m}_w}{2}(1 + \alpha_w)   \right]\\
+   + &\left[-D_e + \frac{\dot{m}_e}{2}(1-\alpha_e) \right]u_E - F_u + \frac{dp}{dx} \biggr \rvert_P V_P = 0
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   where the linearization coefficients are recalled as follow:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   a_W &= -D_w - \frac{\dot{m}_w}(1+\alpha_w)\\
+   a_E &= -D_e - \frac{\dot{m}_e}(1-\alpha_e)\\
+   a_P &= D_w - \frac{\rho V_P}{\Delta t} - a_W - a_E
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   We can then define:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \boxed{\bar{a}_P = -a_W - a_E}
+   \end{equation*}
+   #+END_EXPORT
+   Note how this definition removes the timestep dependence from the linearization coefficient $P$.
+   This is done to make the pressure-velocity coupling independent of timestep. Our momentum equation thus
+   becomes:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{a}_Pu_P + a_Wu_W + a_Eu_E - b_P + \frac{dp}{dx}\biggr\rvert_P V_P = 0
+   \end{equation*}
+   #+END_EXPORT
+   with $b_P$ containing all body force terms. Next, we define:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \boxed{\bar{u}_P = -a_Wu_W - a_Eu_E + b_P}
+   \end{equation*}
+   #+END_EXPORT
+   or more generally:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{u}_P = - \sum_{nb} a_{nb}u_{nb} + b_P
+   \end{equation*}
+   #+END_EXPORT
+   With this, our momentum equation becomes:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{a}_Pu_P = \bar{u}_P - \frac{dp}{dx}\biggr\rvert_P V_P
+   \end{equation*}
+   #+END_EXPORT
+   For an east control volume:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{a}_Eu_E = \bar{u}_E - \frac{dp}{dx}\biggr\rvert_E V_E
+   \end{equation*}
+   #+END_EXPORT
+   By analogy, for a virtual control volume at the east _integration point_:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{a}_e\hat{u}_e = \bar{u}_e - \frac{dp}{dx}\biggr\rvert_e V_e
+   \end{equation*}
+   #+END_EXPORT
+   The equation above defines the advecting velocity. The quantity $\bar{u}_e$ is obtained by
+   central differencing from the $P$ and $E$ values:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \bar{u}_e &= \frac{1}{2}(\bar{u}_P+\bar{u}_E)\\
+   &= \frac{1}{2}\left(\bar{a}_Pu_P + \bar{a}_Eu_E + 
+   \frac{dp}{dx}\biggr\rvert_P V_P + \frac{dp}{dx}\biggr\rvert_E V_E\right)
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   We make further approximations within the $\bar{u}_e$ term:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   &\bar{a}_P \approx \bar{a}_E \approx \bar{a}_e\\
+   &V_P \approx V_E \approx V_e\\
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   With these approximations, our quantity $\bar{u}_e$ is then:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{u}_e = \frac{\bar{a}_e}{2}(u_P + u_E)
+   + \frac{V_e}{2}\left( \frac{dp}{dx}\biggr\rvert_P +\frac{dp}{dx}\biggr\rvert_E \right)
+   \end{equation*}
+   #+END_EXPORT
+   Thus, the expression for the advecting velocity is then:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \bar{a}_e\hat{u}_e = \frac{\bar{a}_e}{2}(u_P + u_E)
+   + \frac{V_e}{2}\left( \frac{dp}{dx}\biggr\rvert_P + \frac{dp}{dx}\biggr\rvert_E \right)
+   - \frac{dp}{dx}\biggr\rvert_e V_e
+   \end{equation*}
+   #+END_EXPORT
+   or:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \hat{u}_e = \frac{1}{2}(u_P + u_E)
+   - \frac{V_e}{\bar{a}_e}\left[ \frac{dp}{dx}\biggr\rvert_e -\frac{1}{2}
+   \left( \frac{dp}{dx}\biggr\rvert_P  + \frac{dp}{dx}\biggr\rvert_E  \right) \right]
+   \end{equation*}
+   #+END_EXPORT
+   If we go ahead and define:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   &\bar{a}_e \approx \frac{1}{2}(\bar{a}_P + \bar{a}_E)\\
+   &V_e \approx \frac{1}{2}(V_P + V_E)\\
+   & \hat{d}_e = \frac{V_e}{\bar{a}_e}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   _Note_: for a cell wth index $i$, $\bar{a}_E = \bar{a}_P$ at index $i+1$. With these new definitions,
+   the advecting velocity is written as:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \hat{u}_e = \frac{1}{2}(u_P + u_E)
+   - \hat{d}_e{\bar{a}_e}\left[ \frac{dp}{dx}\biggr\rvert_e -\frac{1}{2}
+   \left( \frac{dp}{dx}\biggr\rvert_P  + \frac{dp}{dx}\biggr\rvert_E  \right) \right]
+   \end{equation*}
+   #+END_EXPORT
+   _Note_:
+   - the 1st term on RHS is the CDS approximation of the east face velocity. We used this to calculate the
+     mass flux, leading to uncontrained velocity and pressure modes.
+   - the 2nd term on RHS is a =4th order pressure correction term=. It smooths out any oscillations from the
+     presure field. 
+     - it is 4th order because evaluations of the pressure gradient involve 4 location:
+       $W$, $P$, $E$ and $EE$.
+   - coefficient $\hat{d}_e$ can be interpreted as a =relaxation parameter=. Generally, the pressure term should be small,
+     which keeps the advecting velocity close to the CDS approximation. Else, if the pressure oscillations emerge, the
+     pressure terms will be activated to damp out.
+   For the east face, the pressure gradient is calculated as:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \frac{dp}{dx}\biggr\rvert_e = \frac{p_E-p_P}{\Delta x_{PE}}
+   \end{equation*}
+   #+END_EXPORT
+   For the cell at $E$ and $P$, the pressure gradient is calculated as:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \frac{dp}{dx}\biggr\rvert_P &= \frac{p_E-p_W}{\Delta x_{WP}+\Delta x_{PE}}\\
+   \frac{dp}{dx}\biggr\rvert_E &= \frac{p_{EE}-p_P}{\Delta x_{PE}+\Delta x_{E,EE}}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+** Coupled (Direct) Solution Method
+   We need to compute the mass fluxes using the advecting velocity above. In terms of the advecting velocity,
+   the discretized conservation of mass equation looks like this:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \rho A_e \hat{u}_e - \rho A_w \hat{u}_w = 0
+   \end{equation*}
+   #+END_EXPORT
+   or:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \rho A_e \frac{1}{2}(u_P + u_E) &- \rho A_e \hat{d}_e\left[\frac{p_E-p_P}{\Delta x_{PE}}
+   -\frac{1}{2}\left(\frac{dp}{dx}\biggr\rvert_P + \frac{dp}{dx}\biggr\rvert_E \right)\right]
+   -\rho A_w \frac{1}{2}(u_W + u_P)\\
+   &+\rho A_w \hat{d}_w \left[\frac{p_P-p_W}{\Delta x_{WP}}
+   -\frac{1}{2}\left(\frac{dp}{dx}\biggr\rvert_W + \frac{dp}{dx}\biggr\rvert_P \right)\right] = 0
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   Collecting all the pressure and velocity terms together, we then rewrite the result as a residual
+   for the mass equation:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   r_P = &\left[\frac{\rho A_e \hat{d}_e}{\Delta x_{PE}} + \frac{\rho A_w \hat{d}_w}{\Delta x_{WP}} \right]p_P
+   + \left[\frac{\rho A_e}{2} - \frac{\rho A_w}{2} \right]u_P - \left[\frac{\rho A_w \hat{d}_w}{\Delta x_{WP}}
+   \right]p_W\\
+   &- \left[\frac{\rho A_w}{2}\right]u_W - \left[\frac{\rho A_e \hat{d}_e}{\Delta x_{PE}}\right]p_E
+   + \left[\frac{\rho A_e}{2}\right]u_E\\
+   &-\frac{\rho A_w \hat{d}_w}{2}\left[\frac{dp}{dx}\biggr\rvert_W  + \frac{dp}{dx}\biggr\rvert_P \right]
+   + \frac{\rho A_e \hat{d}_e}{2}\left[\frac{dp}{dx}\biggr\rvert_P  + \frac{dp}{dx}\biggr\rvert_E \right]
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+   We see that our mass equation now contains pressure. This allows us to solve for both velocity and
+   pressure simulataneously, because we have 2 equations with 2 unknowns. We will linearize w.r.t both pressure
+   and velocity.  However, we leave the final 2 terms as explicit "lagged" correction terms to eliminate
+   decoupling.
+   Let the solution variable be the vector $[p,u]$, the linearized proble is as follow:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{bmatrix} a_P^{pp} & a_P^{pu} \\ a_P^{up} & a_P^{uu} \end{bmatrix}
+   \begin{Bmatrix} \delta p_P\\\delta u_P \end{Bmatrix}
+   +
+   \begin{bmatrix} a_W^{pp} & a_W^{pu} \\ a_W^{up} & a_W^{uu} \end{bmatrix}
+   \begin{Bmatrix} \delta p_W\\\delta u_W \end{Bmatrix}
+   +
+   \begin{bmatrix} a_E^{pp} & a_E^{pu} \\ a_E^{up} & a_E^{uu} \end{bmatrix}
+   \begin{Bmatrix} \delta p_E\\\delta u_E \end{Bmatrix}
+   =
+   -\begin{Bmatrix} r_P^p\\ r_P^u \end{Bmatrix}
+   \end{equation*}
+   #+END_EXPORT
+   _Note_:
+   - 1st row in matrix: mass equation denoted by $p$
+   - 2nd row in matrix: momentum equation denoted by $u$
+   - superscripts: equation and variable to which the coefficient is associated.
+     - 1st letter: row or the equation
+     - 2nd letter: column or the variable
+     - Eg. $pu$ represent the =velocity= in the =momentum= equation.
+
+*** Linearization of Momentum Equation 
+    For the linearized cofficients for =velocity= in the =momentum= equation, we have already
+    established them:
+    #+BEGIN_EXPORT latex
+    \begin{equation*}
+    \begin{aligned}
+    a_W^{uu} &= -D_w - \frac{\dot{m}_w}{2}(1 + \alpha_w)\\
+    a_E^{uu} &= -D_e + \frac{\dot{m}_e}{2}(1 - \alpha_e)\\
+    a_P^{uu} &= \frac{\rho V_P}{\Delta t} - a_W^{uu} - a_E^{uu}
+    \end{aligned}
+    \end{equation*}
+    #+END_EXPORT
+    The pressure term can be discretized as follow:
+    #+BEGIN_EXPORT latex
+    \begin{equation*}
+    \frac{dp}{dx}\biggr\rvert_P V_P = \frac{1}{2}\left[\frac{p_P-p_W}{\Delta x_{WP}} +
+    \frac{p_E-p_P}{\Delta x_{PE}}  \right]V_P
+    \end{equation*}
+    #+END_EXPORT
+    Linearization coefficients for pressure are as follow:
+    #+BEGIN_EXPORT latex
+    \begin{equation*}
+    \begin{aligned}
+    a_W^{up} &= -\frac{V_P}{2\Delta x_{WP}}\\
+    a_E^{up} &= \frac{V_P}{2\Delta x_{PE}}\\
+    a_P^{up} &= -a_W^{up} - a_E^{up}
+    \end{aligned}
+    \end{equation*}
+    #+END_EXPORT
+*** Linearization of Mass Equation
+    This is based on the residual form of the mass equation above.
+    - For linearization w.r.t pressure:
+      #+BEGIN_EXPORT latex
+      \begin{equation*}
+      \begin{aligned}
+      a_W^{pp} &= -\frac{\rho A_w \hat{d}_w}{\Delta x_{WP}}\\
+      a_E^{pp} &= -\frac{\rho A_e \hat{d}_e}{\Delta x_{PE}}\\
+      a_P^{pp} &= -a_W^{pp} - a_E^{pp}
+      \end{aligned}
+      \end{equation*}
+      #+END_EXPORT
+    - For linearization w.r.t velocity:
+      #+BEGIN_EXPORT latex
+      \begin{equation*}
+      \begin{aligned}
+      a_W^{pu} &= -\frac{\rho A_w}{2}\\
+      a_E^{pu} &= \frac{\rho A_e }{2}\\
+      a_P^{pu} &= a_W^{pu} + a_E^{pu}
+      \end{aligned}
+      \end{equation*}
+      #+END_EXPORT
+   _Note_: these equations are only valid in control volume where advecting velocity is computed based on
+   the special momentum equation (i.e. interior faces only). At the =boundary=, the special momentum is not needed,
+   so our mass equation needs to be modified.\\
+ 
+   Consider the *LEFT BOUNDARY* control volume, here $u_w = u_W$ is specified through the boundary condition. The
+   mass equation is then:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \rho A_e \hat{u}_e - \rho A_w u_W = 0
+   \end{equation*}
+   #+END_EXPORT
+   where the advecting velocity is calculated using the special momentum equation. We carry the procedure in a
+   similar manner as before, resulting in:
+   #+BEGIN_EXPORT latex
+   \begin{equation*}
+   \begin{aligned}
+   \rho A_e \frac{1}{2}(u_P+u_E) - \rho A_e \hat{d}_e &\left[\frac{p_E-p_P}{\Delta x_{PE}}
+   -\frac{1}{2} \left( \frac{dp}{dx}\biggr\rvert_P + \frac{dp}{dx}\biggr\rvert_E \right) \right]
+   -\rho A_w u_W = 0\\
+   &a_W^{pp} = 0\\
+   &a_E^{pp} = -\frac{\rho A_e \hat{d}_e}{\Delta x_{PE}}\\
+   &a_P^{pp} = -a_E^{pp}\\
+   &a_W^{pu} = -\rho A_w\\
+   &a_E^{pu} = \frac{\rho A_e}{2}\\
+   &a_P^{pu} = a_E^{pu}
+   \end{aligned}
+   \end{equation*}
+   #+END_EXPORT
+** Implementation
+   #+BEGIN_EXPORT latex
+   \lstinputlisting[language=Python]{../mee9710/Lessons/couple.py}
+   #+END_EXPORT
+   #+BEGIN_EXPORT latex
+   \newpage
+   #+END_EXPORT

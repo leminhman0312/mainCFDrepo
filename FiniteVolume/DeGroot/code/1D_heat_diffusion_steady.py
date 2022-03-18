@@ -450,8 +450,8 @@ for Ti in T_solns:
 # plt.show()
 # plt.savefig('pic/1d_transient_explicit.png')
 
-plt.title('Residual')
-plt.plot(avgResidList,iterList)
+# plt.title('Residual')
+# plt.plot(avgResidList,iterList)
 plt.show()
 
 
