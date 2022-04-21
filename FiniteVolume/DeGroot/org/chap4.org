@@ -586,7 +586,7 @@
     Note how the negative sign could cause the coefficients having the wrong signs if implement directly.\\
     Nevertheless, if implement using deferred correction approach, the QUICK scheme is an effective higher order scheme. 
     
-** Implementation:[[file:advection_diffusion.py][Python code]]
+** Implementation
    #+BEGIN_EXPORT latex
    \lstinputlisting[language=Python]{../code/advection_diffusion.py}
    #+END_EXPORT

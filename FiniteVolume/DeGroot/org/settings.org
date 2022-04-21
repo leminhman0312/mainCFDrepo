@@ -1,31 +1,19 @@
+* Latex header in org mode :ignore:
+  #+LATEX_HEADER: \usepackage[margin=0.5in]{geometry} \usepackage{graphicx} \usepackage{amssymb} \usepackage{amsmath}
+  #+LATEX_HEADER: \usepackage[fontsize=10pt]{scrextend}
+  #+LATEX_HEADER: \usepackage{fixmath}
+  #+LATEX_HEADER: \usepackage{helvet} \renewcommand\familydefault{\sfdefault}
+  #+LATEX_HEADER: \usepackage{listings} \usepackage{xcolor} \usepackage{hyperref} \usepackage{extarrows} \usepackage{fancyhdr} \usepackage{lastpage} \usepackage{mathtools}
+  #+LATEX_HEADER: \definecolor{codegreen}{rgb}{0,0.6,0} \definecolor{codegray}{rgb}{0.5,0.5,0.5} \definecolor{codepurple}{rgb}{0.58,0,0.82} \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+  #+OPTIONS: tex:t
+  #+LATEX: \setlength\parindent{0pt}
+  #+LATEX_HEADER:  \lstdefinestyle{mystyle}{backgroundcolor=\color{backcolour}, commentstyle=\color{codegreen},keywordstyle=\color{magenta},numberstyle=\scriptsize\color{codegray},stringstyle=\color{codepurple},basicstyle=\sffamily\scriptsize,breakatwhitespace=false, breaklines=true, captionpos=b, keepspaces=true, numbersep=5pt, showspaces=false, showstringspaces=false, showtabs=false, tabsize=2 }
+  #+LATEX_HEADER: \lstset{style=mystyle}
+  #+ATTR_LATEX: :options style=mystyle
+
 * Latex code listing settings :ignore:
 #+BEGIN_EXPORT latex
-\lstdefinestyle{mystyle}{
-    backgroundcolor=\color{backcolour},   
-    commentstyle=\color{codegreen},
-    keywordstyle=\color{magenta},
-    numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codepurple},
-    basicstyle=\sffamily\small,
-    breakatwhitespace=false,         
-    breaklines=true,                 
-    captionpos=b,                    
-    keepspaces=true,                 
-    numbersep=5pt,                  
-    showspaces=false,                
-    showstringspaces=false,
-    showtabs=false,                  
-    tabsize=2
-}
-
-\lstset{style=mystyle}
 \renewcommand{\arraystretch}{2}
 \renewcommand{\footrulewidth}{0.4pt}% Default \footrulewidth is 0pt
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot{}
-\fancyhead[L]{\scriptsize{\leftmark}}
-\fancyhead[R]{\scriptsize{\rightmark}}
-\fancyfoot[L]{\scriptsize{Page \thepage / \pageref{LastPage}}}
 \newpage
 #+END_EXPORT

@@ -289,7 +289,7 @@
     a_P = \frac{\partial r_P}{\partial T_P} = \frac{3}{2}\frac{\rho c_p V_P}{\Delta t} + D_w + D_e - \frac{\partial S_P}{\partial T_P}V_P
     \end{equation*}
     #+END_EXPORT
-** Implementation: [[file:1d_heat_diffusion_transient.py][Python code]]
+** Implementation
    #+BEGIN_EXPORT latex
    \lstinputlisting[language=Python]{../code/1d_heat_diffusion_transient.py}
    #+END_EXPORT

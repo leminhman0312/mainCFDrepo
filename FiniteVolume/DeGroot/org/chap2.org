@@ -234,7 +234,7 @@
     \includegraphics[scale=0.2]{../pic/heat1D_profilePARABOLIC.png}
     \end{center}
     #+END_EXPORT
-** Implemenation: [[file:1D_heat_diffusion_steady.py][Python Code]]
+** Implemenation
   #+BEGIN_EXPORT latex
   \lstinputlisting[language=Python]{../code/1D_heat_diffusion_steady.py}
   #+END_EXPORT
